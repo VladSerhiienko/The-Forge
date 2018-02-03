@@ -1,0 +1,22 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake/Viewer(Windows/VS2017)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-G",
+                "\"'Visual Studio 15 2017 Win64'\"",
+                "-B${workspaceFolder}/build_windows_amd64",
+                "-H${workspaceFolder}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build"
+        }
+    ]
+}
