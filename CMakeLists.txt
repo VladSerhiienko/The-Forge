@@ -78,7 +78,6 @@ add_library(
 target_include_directories(
     RendererDX12
     PUBLIC
-    ${PYTHON_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/Common_3
 )
 
@@ -107,7 +106,6 @@ add_library(
 target_include_directories(
     RendererVk
     PUBLIC
-    ${PYTHON_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/Common_3
     $ENV{VK_SDK_PATH}/include
 )
@@ -181,6 +179,7 @@ set(
     ${CMAKE_SOURCE_DIR}/Common_3/OS/Windows/WindowsFileSystem.cpp
     ${CMAKE_SOURCE_DIR}/Common_3/OS/Windows/WindowsLogManager.cpp
     ${CMAKE_SOURCE_DIR}/Common_3/OS/Windows/WindowsThreadManager.cpp
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/TinyEXR/tinyexr.cpp
 )
 
 add_library(
@@ -192,7 +191,7 @@ add_library(
 target_include_directories(
     OSVk
     PUBLIC
-    ${PYTHON_INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/TinyEXR
     ${CMAKE_SOURCE_DIR}/Common_3
     $ENV{VK_SDK_PATH}/include
 )
@@ -212,7 +211,6 @@ add_library(
 target_include_directories(
     OSDX12
     PUBLIC
-    ${PYTHON_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/Common_3
     $ENV{VK_SDK_PATH}/include
 )
@@ -235,15 +233,14 @@ add_library(
     ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_common.hpp
     ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_cross.cpp
     ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_cross.hpp
-
-    # ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_cpp.cpp
-    # ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_cpp.hpp
-    # ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_glsl.cpp
-    # ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_glsl.hpp
-    # ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_hlsl.cpp
-    # ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_hlsl.hpp
-    # ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_msl.cpp
-    # ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_msl.hpp
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_cpp.cpp
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_cpp.hpp
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_glsl.cpp
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_glsl.hpp
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_hlsl.cpp
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_hlsl.hpp
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_msl.cpp
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/SPIRV_Cross/spirv_msl.hpp
 )
 
 target_compile_definitions(
@@ -251,6 +248,119 @@ target_compile_definitions(
     PRIVATE
     API_EXPORT=1
 )
+
+add_executable(
+    TransformationsVk
+    ${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/01_Transformations.cpp
+    ${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.vert
+    ${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.frag
+    ${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.vert
+    ${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.frag
+)
+
+make_directory( "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/" )
+make_directory( "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/" )
+make_directory( "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/" )
+make_directory( "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/Binary/" )
+
+add_custom_command(
+    TARGET
+    TransformationsVk
+    PRE_BUILD
+
+    DEPENDS "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.vert"
+    DEPENDS "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.frag"
+    DEPENDS "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.vert"
+    DEPENDS "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.frag"
+
+    COMMAND
+        $ENV{VK_SDK_PATH}/bin/glslangValidator.exe
+        -V "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.vert"
+        -o "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/basic.vert.spv"
+    COMMAND
+        $ENV{VK_SDK_PATH}/bin/glslangValidator.exe
+        -V "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.frag"
+        -o "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/basic.frag.spv"
+    COMMAND
+        $ENV{VK_SDK_PATH}/bin/glslangValidator.exe
+        -V "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.vert"
+        -o "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/skybox.vert.spv"
+    COMMAND
+        $ENV{VK_SDK_PATH}/bin/glslangValidator.exe
+        -V "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.frag"
+        -o "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/skybox.frag.spv"
+    
+    COMMAND ${CMAKE_COMMAND}
+        -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.vert"
+        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/"
+    COMMAND ${CMAKE_COMMAND}
+        -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.frag"
+        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/"
+    COMMAND ${CMAKE_COMMAND}
+        -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.vert"
+        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/"
+    COMMAND ${CMAKE_COMMAND}
+        -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.frag"
+        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/"
+    
+    COMMAND ${CMAKE_COMMAND}
+        -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/basic.vert.spv"
+        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/Binary/"
+    COMMAND ${CMAKE_COMMAND}
+        -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/basic.frag.spv"
+        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/Binary/"
+    COMMAND ${CMAKE_COMMAND}
+        -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/skybox.vert.spv"
+        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/Binary/"
+    COMMAND ${CMAKE_COMMAND}
+        -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/skybox.frag.spv"
+        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/Binary/"
+
+    COMMENT Building shaders ...
+    VERBATIM
+)
+
+# link_directories(
+#     $ENV{VK_SDK_PATH}/lib
+# )
+
+target_include_directories(
+    TransformationsVk
+    PUBLIC
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/Common_3
+    $ENV{VK_SDK_PATH}/include
+)
+
+target_link_libraries(
+    TransformationsVk
+    OSVk
+    RendererVk
+    SpirvTools
+    $ENV{VK_SDK_PATH}/lib/vulkan-1.lib
+)
+
+target_compile_definitions(
+    TransformationsVk
+    PRIVATE
+    VULKAN=1
+)
+
+set_target_properties(
+    TransformationsVk
+    PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY
+    "$(OutDir)"
+)
+
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PREDEFINED_TARGETS_FOLDER "CustomTargets")

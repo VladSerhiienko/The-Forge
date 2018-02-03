@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2018 Confetti Interactive Inc.
- * 
+ *
  * This file is part of The-Forge
  * (see https://github.com/ConfettiFX/The-Forge).
- * 
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -11,9 +11,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -22,7 +22,8 @@
  * under the License.
 */
 
-#include "Image.h"
+#include "ImageKTXImpl.h"
+//#include "Image.h"
 #include "../Interfaces/ILogManager.h"
 #include "../../ThirdParty/OpenSource/Nothings/stb_image.h"
 #include "../../ThirdParty/OpenSource/Nothings/stb_image_resize.h"
@@ -1764,7 +1765,7 @@ bool Image::iLoadGNFFromMemory(const char* memory, size_t memSize, const bool us
 
 
 // Image loading
-// struct of table for file format to loading function 
+// struct of table for file format to loading function
 struct ImageLoaderDefinition
 {
   typedef bool (Image::*ImageLoaderFunction)(const char* memory, uint32_t memSize, const bool useMipmaps, memoryAllocationFunc pAllocator, void* pUserData);
@@ -1909,7 +1910,7 @@ bool Image::loadImage(const char *fileName, bool useMipmaps, memoryAllocationFun
 bool Image::Convert(const ImageFormat::Enum newFormat) {
   ubyte *newPixels;
   uint nPixels = GetNumberOfPixels(0, mMipMapCount) * mArrayCount;
- 
+
   if (mFormat == ImageFormat::RGBE8 && (newFormat == ImageFormat::RGB32F || newFormat == ImageFormat::RGBA32F)) {
     newPixels = (ubyte*)conf_malloc(sizeof(ubyte) * GetMipMappedSize(0, mMipMapCount, newFormat) * mArrayCount);
     float *dest = (float *)newPixels;
@@ -1927,7 +1928,7 @@ bool Image::Convert(const ImageFormat::Enum newFormat) {
       }
       src += 4;
     } while (--nPixels);
-    
+
   }
   else {
     if (!ImageFormat::IsPlainFormat(mFormat) || !(ImageFormat::IsPlainFormat(newFormat) || newFormat == ImageFormat::RGB10A2 || newFormat == ImageFormat::RGBE8 || newFormat == ImageFormat::RGB9E5))
@@ -2148,7 +2149,7 @@ bool Image::iSaveDDS(const char *fileName)
   header.mDWPitchOrLinearSize = 0;
   header.mDWMipMapCount = (mMipMapCount > 1) ? mMipMapCount : 0;
   header.mPixelFormat.mDWSize = 32;
-  
+
   header.mDWFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | (mMipMapCount > 1 ? DDSD_MIPMAPCOUNT : 0) | (mDepth > 1 ? DDSD_DEPTH : 0);
 
   int nChannels = ImageFormat::GetChannelCount(mFormat);
@@ -2209,7 +2210,7 @@ bool Image::iSaveDDS(const char *fileName)
         headerDX10.mResourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE3D;
 
       switch (mFormat)
-      {  
+      {
       case ImageFormat::RGB32F:   headerDX10.mDXGIFormat = 6; break;
       case ImageFormat::RGB9E5:   headerDX10.mDXGIFormat = 67; break;
       case ImageFormat::RG11B10F: headerDX10.mDXGIFormat = 26; break;
@@ -2292,7 +2293,7 @@ bool Image::iSaveTGA(const char* fileName)
   case ImageFormat::RGBA8:
     return 0 != stbi_write_tga(fileName, mWidth, mHeight, 4, pData);
     break;
-  default: 
+  default:
   {
     // uncompress/convert and try again
     return convertAndSaveImage(*this, &Image::iSaveTGA, fileName);

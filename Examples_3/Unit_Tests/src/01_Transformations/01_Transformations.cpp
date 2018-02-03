@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2018 Confetti Interactive Inc.
- * 
+ *
  * This file is part of The-Forge
  * (see https://github.com/ConfettiFX/The-Forge).
- * 
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -11,9 +11,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -28,22 +28,22 @@
 #define MAX_PLANETS 20 // Does not affect test, just for allocating space in uniform block. Must match with shader.
 
 //tiny stl
-#include "../../Common_3/ThirdParty/OpenSource/TinySTL/vector.h"
-#include "../../Common_3/ThirdParty/OpenSource/TinySTL/string.h"
+#include "Common_3/ThirdParty/OpenSource/TinySTL/vector.h"
+#include "Common_3/ThirdParty/OpenSource/TinySTL/string.h"
 
 //Interfaces
-#include "../../Common_3/OS/Interfaces/ICameraController.h"
-#include "../../Common_3/OS/Interfaces/ILogManager.h"
-#include "../../Common_3/OS/Interfaces/IFileSystem.h"
-#include "../../Common_3/OS/Interfaces/ITimeManager.h"
-#include "../../Common_3/OS/Interfaces/IUIManager.h"
-#include "../../Common_3/Renderer/IRenderer.h"
-#include "../../Common_3/Renderer/ResourceLoader.h"
+#include "Common_3/OS/Interfaces/ICameraController.h"
+#include "Common_3/OS/Interfaces/ILogManager.h"
+#include "Common_3/OS/Interfaces/IFileSystem.h"
+#include "Common_3/OS/Interfaces/ITimeManager.h"
+#include "Common_3/OS/Interfaces/IUIManager.h"
+#include "Common_3/Renderer/IRenderer.h"
+#include "Common_3/Renderer/ResourceLoader.h"
 
 //Math
-#include "../../Common_3/OS/Math/MathTypes.h"
+#include "Common_3/OS/Math/MathTypes.h"
 
-#include "../../Common_3/OS/Interfaces/IMemoryManager.h"
+#include "Common_3/OS/Interfaces/IMemoryManager.h"
 
 /// Camera Controller
 #define GUI_CAMERACONTROLLER 1
@@ -98,7 +98,7 @@ Timer accumTimer;
 #endif
 
 #ifdef _DURANGO
-// Durango load assets from 'Layout\Image\Loose'
+// Durango load assets from 'Layout/Image/Loose'
 const char* pszRoots[] =
 {
 	"Shaders/Binary/",	// FSR_BinShaders
@@ -114,14 +114,14 @@ const char* pszRoots[] =
 //Example for using roots or will cause linker error with the extern root in FileSystem.cpp
 const char* pszRoots[] =
 {
-    "../../../src/01_Transformations/" RESOURCE_DIR "/Binary/",	// FSR_BinShaders
-    "../../../src/01_Transformations/" RESOURCE_DIR "/",		// FSR_SrcShaders
-    "",															// FSR_BinShaders_Common
-    "",															// FSR_SrcShaders_Common
-    "../../../UnitTestResources/Textures/",						// FSR_Textures
-    "../../../UnitTestResources/Meshes/",						// FSR_Meshes
-    "../../../UnitTestResources/Fonts/",						// FSR_Builtin_Fonts
-    "",															// FSR_OtherFiles
+    "../Transformations/" RESOURCE_DIR "/Binary/",          // FSR_BinShaders
+    "../Transformations/" RESOURCE_DIR "/",                 // FSR_SrcShaders
+    "",                                                     // FSR_BinShaders_Common
+    "",                                                     // FSR_SrcShaders_Common
+    "../../Examples_3/Unit_Tests/UnitTestResources/Textures/", // FSR_Textures
+    "../../Examples_3/Unit_Tests/UnitTestResources/Meshes/",   // FSR_Meshes
+    "../../Examples_3/Unit_Tests/UnitTestResources/Fonts/",    // FSR_Builtin_Fonts
+    "",                                                     // FSR_OtherFiles
 };
 #endif
 
@@ -161,7 +161,7 @@ uint32_t         gFrameIndex = 0;
 
 const int        gSphereResolution = 30; // Increase for higher resolution spheres
 const uint       gNumPlanets = 11;       // Sun, Mercury -> Neptune, Pluto, Moon
-const uint       gTimeOffset = 600000;   // For visually better starting locations 
+const uint       gTimeOffset = 600000;   // For visually better starting locations
 const float      gRotSelfScale = 0.0004f;
 const float      gRotOrbitYScale = 0.001f;
 const float      gRotOrbitZScale = 0.00001f;
@@ -193,7 +193,7 @@ struct CameraProperty
 	float               mCamearYaw;
 } gCameraProp;
 #endif
-float               gCameraYRotateScale;   // decide how fast camera rotate 
+float               gCameraYRotateScale;   // decide how fast camera rotate
 
 WindowsDesc			gWindow = {};
 
@@ -222,8 +222,9 @@ bool cameraMouseWheel(const MouseWheelEventData* data)
 void CreateCameraController(const vec3& camPos, const vec3& lookAt, const CameraMotionParameters& motion)
 {
 #if USE_CAMERACONTROLLER == FPS_CAMERACONTROLLER
-	pCameraController = createFpsCameraController(camPos, lookAt);
-	requestMouseCapture(true);
+	//pCameraController = createFpsCameraController(camPos, lookAt);
+    pCameraController = createGuiCameraController(camPos, lookAt);
+    //requestMouseCapture(true);
 #elif USE_CAMERACONTROLLER == GUI_CAMERACONTROLLER
 	pCameraController = createGuiCameraController(camPos, lookAt);
 #endif
@@ -420,16 +421,16 @@ void initApp(const WindowsDesc* window)
 	vertFile.Close();
 	fragFile.Close();
 #elif defined(METAL)
-    
+
     FSRoot shaderRoot = FSRoot::FSR_SrcShaders;
 #ifdef TARGET_IOS
     shaderRoot = FSRoot::FSR_Absolute; // Resources on iOS are bundled with the application.
 #endif
-    
+
     File metalFile = {}; metalFile.Open("skybox.metal", FM_Read, shaderRoot);
     String metal = metalFile.ReadText();
     skyShader = { skyShader.mStages, {metalFile.GetName(), metal, "VSMain" }, {metalFile.GetName(), metal, "PSMain"} };
-    
+
     metalFile.Open("basic.metal", FM_Read, shaderRoot);
     metal = metalFile.ReadText();
     basicShader = { basicShader.mStages, { metalFile.GetName(), metal, "VSMain" }, { metalFile.GetName(), metal, "PSMain" } };
@@ -683,12 +684,12 @@ void initApp(const WindowsDesc* window)
 	UISettings uiSettings = {};
 	uiSettings.pDefaultFontName = "TitilliumText/TitilliumText-Bold.ttf";
 	addUIManagerInterface(pRenderer, &uiSettings, &pUIManager);
-    
+
 #if USE_CAMERACONTROLLER
     CameraMotionParameters cmp {160.0f, 600.0f, 200.0f};
 	vec3 camPos { 48.0f, 48.0f, 20.0f };
 	vec3 lookAt{ 0 };
-    
+
     CreateCameraController(camPos, lookAt, cmp);
 #else
     // initial camera properties
@@ -697,7 +698,7 @@ void initApp(const WindowsDesc* window)
     gCameraProp.mCameraPosition = Point3(48.0f, 48.0f, 20.0f);
     gCameraProp.mCameraForward = vec3(0.0f, 0.0f, 1.0f);
     gCameraProp.mCameraUp = vec3(0.0f, 1.0f, 0.0f);
-    
+
     vec3 camRot(gCameraProp.mCameraPitch, gCameraProp.mCamearYaw, 0.0f);
     mat3 trans;
     trans = mat3::rotationZYX(camRot);
@@ -710,7 +711,7 @@ void initApp(const WindowsDesc* window)
 void ProcessInput(float deltaTime)
 {
 #if USE_CAMERACONTROLLER
-    
+
 #ifndef TARGET_IOS
 #ifdef _DURANGO
 	if (getJoystickButtonDown(BUTTON_A))
@@ -732,7 +733,7 @@ void update(float deltaTime)
 
 	unsigned int currentTime = accumTimer.GetMSec(false);
 
-	// update camera with time 
+	// update camera with time
 #if USE_CAMERACONTROLLER
 	mat4 viewMat = pCameraController->getViewMatrix();
 #else
@@ -798,7 +799,7 @@ void drawFrame(float deltaTime)
 
 	Cmd* cmd = ppCmds[gFrameIndex];
 	beginCmd(cmd);
-    
+
 	TextureBarrier barriers[] = {
 		{ pRenderTarget->pTexture, RESOURCE_STATE_RENDER_TARGET },
 		{ pDepthBuffer->pTexture, RESOURCE_STATE_DEPTH_WRITE },
@@ -958,7 +959,7 @@ int main(int argc, char **argv)
         // if framerate appears to drop below about 6, assume we're at a breakpoint and simulate 20fps.
         if (deltaTime > 0.15f)
             deltaTime = 0.05f;
-        
+
 		handleMessages();
         update(deltaTime);
 		drawFrame(deltaTime);
@@ -988,32 +989,32 @@ float retinaScale = 1.0f;
     if(self)
     {
         FileSystem::SetCurrentDir(FileSystem::GetProgramDir());
-        
+
         retinaScale = retinaScalingFactor;
-        
+
         RectDesc resolution;
         getRecommendedResolution(&resolution);
-        
+
         gWindow.windowedRect = resolution;
         gWindow.fullscreenRect = resolution;
         gWindow.fullScreen = false;
         gWindow.maximized = false;
         gWindow.handle = (void*)CFBridgingRetain(view);
-        
+
         @autoreleasepool {
             const char * appName = "01_Transformations";
             openWindow(appName, &gWindow);
             initApp(&gWindow);
         }
     }
-    
+
     return self;
 }
 
 - (void)drawRectResized:(CGSize)size
 {
     waitForFences(pGraphicsQueue, gImageCount, pRenderCompleteFences);
-    
+
     gWindowWidth = size.width * retinaScale;
     gWindowHeight = size.height * retinaScale;
     unload();
@@ -1026,7 +1027,7 @@ float retinaScale = 1.0f;
     // if framerate appears to drop below about 6, assume we're at a breakpoint and simulate 20fps.
     if (deltaTime > 0.15f)
         deltaTime = 0.05f;
-    
+
     update(deltaTime);
     drawFrame(deltaTime);
 }
