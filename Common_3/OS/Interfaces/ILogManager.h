@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2018 Confetti Interactive Inc.
- * 
+ *
  * This file is part of The-Forge
  * (see https://github.com/ConfettiFX/The-Forge).
- * 
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -11,9 +11,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -41,9 +41,9 @@ void _OutputDebugString(const char *str, ...);
 void _PrintUnicode(const String& str, bool error = false);
 void _PrintUnicodeLine(const String& str, bool error = false);
 
-#define ErrorMsg(str,...) _ErrorMsg(__LINE__, __FILE__, str, ##__VA_ARGS__)
-#define WarningMsg(str,...) _WarningMsg(__LINE__, __FILE__, str, ##__VA_ARGS__)
-#define InfoMsg(str,...) _InfoMsg(__LINE__, __FILE__, str, ##__VA_ARGS__)
+#define ErrorMsg( str, ... ) _ErrorMsg( __LINE__, __FILE__, str, ##__VA_ARGS__ )
+#define WarningMsg( str, ... ) _WarningMsg( __LINE__, __FILE__, str, ##__VA_ARGS__ )
+#define InfoMsg( str, ... ) _InfoMsg( __LINE__, __FILE__, str, ##__VA_ARGS__ )
 
 #if _MSC_VER >= 1400
 // To make MSVC 2005 happy
@@ -74,26 +74,46 @@ void _PrintUnicodeLine(const String& str, bool error = false);
 #define IFASSERT(x)
 #endif
 #endif // DEBUG
+
 #ifdef USE_LOGGING
-#define LOGDEBUG(message) LogManager::Write(LogLevel::LL_Debug, ToString(__FUNCTION__, message, ""))
-#define LOGINFO(message) LogManager::Write(LogLevel::LL_Info, ToString(__FUNCTION__, message, ""))
-#define LOGWARNING(message) LogManager::Write(LogLevel::LL_Warning, ToString(__FUNCTION__, message, ""))
-#define LOGERROR(message) LogManager::Write(LogLevel::LL_Error, ToString(__FUNCTION__, message, ""))
-#define LOGRAW(message) LogManager::WriteRaw(ToString(__FUNCTION__, message, ""))
-#define LOGDEBUGF(format, ...) LogManager::Write(LogLevel::LL_Debug, ToString(__FUNCTION__, format, ##__VA_ARGS__))
-#define LOGINFOF(format, ...) LogManager::Write(LogLevel::LL_Info, ToString(__FUNCTION__, format, ##__VA_ARGS__))
-#define LOGWARNINGF(format, ...) LogManager::Write(LogLevel::LL_Warning, ToString(__FUNCTION__, format, ##__VA_ARGS__))
-#define LOGERRORF(format, ...) LogManager::Write(LogLevel::LL_Error, ToString(__FUNCTION__, format, ##__VA_ARGS__))
-#define LOGRAWF(format, ...) LogManager::WriteRaw(ToString(__FUNCTION__, format, ##__VA_ARGS__))
+
+#define LOGDEBUG( message ) LogManager::Write( LogLevel::LL_Debug, ToString( __FUNCTION__, message, "" ) )
+#define LOGINFO( message ) LogManager::Write( LogLevel::LL_Info, ToString( __FUNCTION__, message, "" ) )
+#define LOGWARNING( message ) LogManager::Write( LogLevel::LL_Warning, ToString( __FUNCTION__, message, "" ) )
+#define LOGERROR( message ) LogManager::Write( LogLevel::LL_Error, ToString( __FUNCTION__, message, "" ) )
+#define LOGRAW( message ) LogManager::WriteRaw( ToString( __FUNCTION__, message, "" ) )
+#define LOGDEBUGF( format, ... ) LogManager::Write( LogLevel::LL_Debug, ToString( __FUNCTION__, format, ##__VA_ARGS__ ) )
+#define LOGINFOF( format, ... ) LogManager::Write( LogLevel::LL_Info, ToString( __FUNCTION__, format, ##__VA_ARGS__ ) )
+#define LOGWARNINGF( format, ... ) LogManager::Write( LogLevel::LL_Warning, ToString( __FUNCTION__, format, ##__VA_ARGS__ ) )
+#define LOGERRORF( format, ... ) LogManager::Write( LogLevel::LL_Error, ToString( __FUNCTION__, format, ##__VA_ARGS__ ) )
+#define LOGRAWF( format, ... ) LogManager::WriteRaw( ToString( __FUNCTION__, format, ##__VA_ARGS__ ) )
+
+
 #else
-#define LOGDEBUG(message) ((void)0)
-#define LOGINFO(message) ((void)0)
-#define LOGWARNING(message) ((void)0)
-#define LOGERROR(message) ((void)0)
-#define LOGRAW(message) ((void)0)
-#define LOGDEBUGF(...) ((void)0)
-#define LOGINFOF(...) ((void)0)
-#define LOGWARNINGF(...) ((void)0)
-#define LOGERRORF(...) ((void)0)
-#define LOGRAWF(...) ((void)0)
+
+#define LOGDEBUG( message ) ( (void) 0 )
+#define LOGINFO( message ) ( (void) 0 )
+#define LOGWARNING( message ) ( (void) 0 )
+#define LOGERROR( message ) ( (void) 0 )
+#define LOGRAW( message ) ( (void) 0 )
+#define LOGDEBUGF( ... ) ( (void) 0 )
+#define LOGINFOF( ... ) ( (void) 0 )
+#define LOGWARNINGF( ... ) ( (void) 0 )
+#define LOGERRORF( ... ) ( (void) 0 )
+#define LOGRAWF( ... ) ( (void) 0 )
+
+#endif
+
+#ifdef SPDLOG_VERSION
+
+#define LOGINFOFF( message, ... ) LogManager::Info( message, ##__VA_ARGS__ )
+#define LOGWARNFF( message, ... ) LogManager::Warn( message, ##__VA_ARGS__ )
+#define LOGERRORFF( message, ... ) LogManager::Error( message, ##__VA_ARGS__ )
+
+#else
+
+#define LOGINFOFF( message ) ( (void) 0 )
+#define LOGWARNFF( message ) ( (void) 0 )
+#define LOGERRORFF( message ) ( (void) 0 )
+
 #endif

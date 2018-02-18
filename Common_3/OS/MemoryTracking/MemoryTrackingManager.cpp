@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2018 Confetti Interactive Inc.
- * 
+ *
  * This file is part of The-Forge
  * (see https://github.com/ConfettiFX/The-Forge).
- * 
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -11,58 +11,168 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
-*/
+**/
+
+// TODO: Add a memory tracker
 
 #include "../Interfaces/ILogManager.h"
 #include "../Interfaces/IOperatingSystem.h"
 #include "../Interfaces/IMemoryManager.h"
 
-// TODO: Add a memory tracker
+#include <new>
+#include <time.h>
 
-#undef malloc
-#undef calloc
-#undef realloc
-#undef free
-#include <cstdlib>
+//#define ALLOW_DLMALLOC
 
-void* m_allocator(size_t size)
-{
-	return malloc(size);
+//#define ONLY_MSPACES 1
+#define MSPACES 1
+#define USE_DL_PREFIX 1
+#define MALLOC_ALIGNMENT ( confetti::DEFAULT_ALIGNMENT )
+//#include "malloc-2.8.6.h"
+#include "dlmalloc.cc"
+
+void *conf_malloc( size_t size ) {
+    return confetti::allocate( size );
 }
 
-void* m_allocator(size_t count, size_t size)
-{
-	return calloc(count, size);
+void *conf_calloc( size_t count, size_t size ) {
+    return confetti::allocate( size * count );
 }
 
-void* m_reallocator(void* ptr, size_t size)
-{
-	return realloc(ptr, size);
+void *conf_realloc( void *p, size_t size ) {
+    return confetti::reallocate( p, size );
 }
 
-void m_deallocator(void* ptr)
-{
-	free(ptr);
+void conf_free( void *p ) {
+    confetti::deallocate( p );
 }
 
-#undef conf_malloc
-#undef conf_free
+static thread_local mspace tlms = create_mspace(0, 0);
 
-void* conf_malloc(size_t size)
-{
-	return malloc(size);
+namespace confetti {
+    void *allocate( size_t size, size_t alignment ) {
+#if defined( ALLOW_DLMALLOC )
+
+        (void) alignment;
+        return dlmalloc( size );
+
+#elif defined( __ANDROID__ )
+        void *p = nullptr;
+        ::posix_memalign( &p, alignment, size );
+        return p;
+#else
+        (void) alignment;
+        return ::malloc( size );
+        //return ::_aligned_malloc( size, alignment );
+#endif
+    }
+
+    void *reallocate( void *p, size_t size, size_t alignment ) {
+#if defined( ALLOW_DLMALLOC )
+
+        (void) alignment;
+        return dlrealloc( p, size );
+
+#elif defined( __ANDROID__ )
+        static_assert( true, "Not implemented." );
+#else
+        (void) alignment;
+        return ::realloc( p, size );
+        //return ::_aligned_realloc( p, size, alignment );
+#endif
+    }
+
+    void deallocate( void *p ) {
+#if defined( ALLOW_DLMALLOC )
+
+        return dlfree( p );
+
+#elif defined( __ANDROID__ )
+        ::free( p );
+#else
+        ::free( p );
+        //::_aligned_free( p );
+#endif
+    }
+
+    void *threadLocalAllocate( size_t size, size_t alignment ) {
+        (void) alignment;
+        return mspace_malloc( tlms, size );
+    }
+
+    void *threadLocalReallocate( void *p, size_t size, size_t alignment ) {
+        (void) alignment;
+        return mspace_realloc( tlms, p, size );
+    }
+
+    void threadLocalDeallocate( void *p ) {
+        mspace_free( tlms, p );
+    }
 }
 
-void conf_free(void* ptr)
-{
-	free(ptr);
+void *operator new( size_t size ) {
+    return confetti::allocate( size );
+}
+
+void *operator new[]( size_t size ) {
+    return confetti::allocate( size );
+}
+
+void *operator new[]( size_t size, const char * /*name*/, int /*flags*/, unsigned /*debugFlags*/, const char * /*file*/, int /*line*/ ) {
+    return confetti::allocate( size );
+}
+
+void *operator new[]( size_t size,
+                      size_t alignment,
+                      size_t /*alignmentOffset*/,
+                      const char * /*name*/,
+                      int /*flags*/,
+                      unsigned /*debugFlags*/,
+                      const char * /*file*/,
+                      int /*line*/ ) {
+    return confetti::allocate( size, alignment );
+}
+
+void *operator new( size_t size, size_t alignment ) {
+    return confetti::allocate( size, alignment );
+}
+
+void *operator new( size_t size, size_t alignment, const std::nothrow_t & ) throw( ) {
+    return confetti::allocate( size, alignment );
+}
+
+void *operator new[]( size_t size, size_t alignment ) {
+    return confetti::allocate( size, alignment );
+}
+
+void *operator new[]( size_t size, size_t alignment, const std::nothrow_t & ) throw( ) {
+    return confetti::allocate( size, alignment );
+}
+
+// C++14 deleter
+void operator delete( void *p, std::size_t sz ) throw( ) {
+    confetti::deallocate( p );
+    (void) ( sz );
+}
+
+void operator delete[]( void *p, std::size_t sz ) throw( ) {
+    confetti::deallocate( p );
+    (void) ( sz );
+}
+
+void operator delete( void *p ) throw( ) {
+    confetti::deallocate( p );
+}
+
+void operator delete[]( void *p ) throw( ) {
+    confetti::deallocate( p );
 }

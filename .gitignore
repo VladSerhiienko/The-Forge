@@ -43,5 +43,6 @@ Art/
 
 # Vulkan Binary Shaders
 **/PCVulkan/Binary/
+**/Resources/
 build_windows_*/
 Common_3/ThirdParty/OpenSource/flatbuffers

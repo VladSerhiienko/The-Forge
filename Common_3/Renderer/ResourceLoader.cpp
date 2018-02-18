@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2018 Confetti Interactive Inc.
- * 
+ *
  * This file is part of The-Forge
  * (see https://github.com/ConfettiFX/The-Forge).
- * 
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -11,9 +11,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -77,7 +77,7 @@ typedef struct ResourceLoader
 	CmdPool* pCopyCmdPool;
 
 	tinystl::vector<Buffer*> mTempStagingBuffers;
-    
+
     bool mOpen = false;
 } ResourceLoader;
 
@@ -93,7 +93,7 @@ typedef struct ResourceThread
 //////////////////////////////////////////////////////////////////////////
 static void addResourceLoader (Renderer* pRenderer, uint64_t mSize, ResourceLoader** ppLoader, Queue* pCopyQueue)
 {
-	ResourceLoader* pLoader = (ResourceLoader*)conf_calloc(1, sizeof(*pLoader));
+	ResourceLoader* pLoader = conf_placement_new< ResourceLoader >( conf_calloc(1, sizeof(*pLoader)) );
 	pLoader->pRenderer = pRenderer;
 
 	BufferDesc bufferDesc = {};
@@ -209,7 +209,7 @@ static MappedMemoryRange consumeResourceLoaderMemory(uint64_t memoryRequirement,
 	return { pDstData, pLoader->pStagingBuffer, currentOffset, memoryRequirement };
 }
 
-/// 
+///
 static MappedMemoryRange consumeResourceUpdateMemory(uint64_t memoryRequirement, uint32_t alignment, ResourceLoader* pLoader)
 {
 	if (alignment != 0 && pLoader->mCurrentPos % alignment != 0)
@@ -485,7 +485,7 @@ static void cmdUpdateResource(Cmd* pCmd, BufferUpdateDesc* pBufferUpdate, Resour
 	const uint64_t offset = round_up_64(pBufferUpdate->mDstOffset, alignment);
 
     void* pDstBufferAddress = (uint8_t*)(pBuffer->pCpuMappedAddress) + offset;
-    
+
 	void* pSrcBufferAddress = NULL;
     if (pBufferUpdate->pData)
         pSrcBufferAddress = (uint8_t*)(pBufferUpdate->pData) + pBufferUpdate->mSrcOffset;
@@ -522,7 +522,7 @@ static void cmdUpdateResource(Cmd* pCmd, BufferUpdateDesc* pBufferUpdate, Resour
 		else
 			memset(range.pData, NULL, range.mSize);
 
-		cmdUpdateBuffer(pCmd, range.mOffset, pBuffer->mPositionInHeap + offset, 
+		cmdUpdateBuffer(pCmd, range.mOffset, pBuffer->mPositionInHeap + offset,
             bufferSize, range.pBuffer, pBuffer);
 	}
 }
@@ -614,7 +614,7 @@ void initResourceLoaderInterface(Renderer* pRenderer, uint64_t memoryBudget, boo
 
 			pItem->pFunc = loadThread;
 
-			ResourceThread* thread = (ResourceThread*)conf_calloc(1, sizeof(*thread));
+            ResourceThread* thread = conf_placement_new<ResourceThread>(conf_calloc(1, sizeof(*thread)));
 
 			addResourceLoader (pRenderer, memoryBudget, &thread->pLoader, pCopyQueue);
 
@@ -797,7 +797,7 @@ void updateResource(BufferUpdateDesc* pBufferUpdate, bool batch /* = false*/)
                 beginCmd(pCmd);
                 pMainResourceLoader->mOpen = true;
             }
-            
+
             cmdUpdateResource(pCmd, pBufferUpdate, pMainResourceLoader);
         }
 	}
@@ -830,7 +830,7 @@ void flushResourceUpdates()
     if (pMainResourceLoader->mOpen)
     {
         endCmd(pMainResourceLoader->pBatchCopyCmd);
-        
+
         queueSubmit(pCopyQueue, 1, &pMainResourceLoader->pBatchCopyCmd, pWaitFence, 0, 0, 0, 0);
         waitForFences(pCopyQueue, 1, &pWaitFence);
 
@@ -855,13 +855,13 @@ void finishResourceLoading()
 	{
         while (!gResourceQueue.empty ())
             Thread::Sleep (0);
-        
+
         gFinishLoading = true;
-        
+
         // Wait till all resources are loaded
         while (!pThreadPool->IsCompleted(0))
             Thread::Sleep(0);
-        
+
 		Cmd* pCmds[MAX_LOAD_THREADS + 1];
 		for (uint32_t i = 0; i < gResourceThreads.getCount(); ++i)
 		{

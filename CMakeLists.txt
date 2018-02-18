@@ -48,6 +48,42 @@ set(flatbuffers_binary_dir ${BINARY_DIR})
 message(STATUS "flatbuffers_source_dir = ${flatbuffers_source_dir}")
 message(STATUS "flatbuffers_binary_dir = ${flatbuffers_binary_dir}")
 
+ExternalProject_Add(
+    FbxPipeline
+    GIT_REPOSITORY "git@github.com:VladSerhiienko/FbxPipeline.git"
+    GIT_TAG "master"
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/FbxPipeline"
+    CMAKE_ARGS ${default_cmake_args}
+    TEST_COMMAND ""
+    INSTALL_COMMAND ""
+)
+
+ExternalProject_Get_Property(FbxPipeline SOURCE_DIR)
+ExternalProject_Get_Property(FbxPipeline BINARY_DIR)
+set(FbxPipeline_source_dir ${SOURCE_DIR})
+set(FbxPipeline_binary_dir ${BINARY_DIR})
+message(STATUS "FbxPipeline_source_dir = ${FbxPipeline_source_dir}")
+message(STATUS "FbxPipeline_binary_dir = ${FbxPipeline_binary_dir}")
+
+ExternalProject_Add(
+    spdlog
+    GIT_REPOSITORY "git@github.com:gabime/spdlog.git"
+    GIT_TAG "master"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/spdlog"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    LOG_DOWNLOAD ON
+)
+
+ExternalProject_Get_Property(spdlog SOURCE_DIR)
+set(spdlog_source_dir ${SOURCE_DIR})
+message(STATUS "spdlog_source_dir = ${spdlog_source_dir}")
+
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
 
@@ -55,6 +91,12 @@ if (WIN32)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_CRT_SECURE_NO_WARNINGS -DUNICODE -D_UNICODE")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_CRT_SECURE_NO_WARNINGS -DUNICODE -D_UNICODE")
 endif()
+
+#
+#
+# Renderer (Direct3D12)
+#
+#
 
 add_library(
     RendererDX12  
@@ -87,6 +129,19 @@ target_compile_definitions(
     DIRECT3D12=1
 )
 
+set_target_properties(
+    RendererDX12
+    PROPERTIES
+    FOLDER
+    Libraries/Direct3D12
+)
+
+#
+#
+# Renderer (Vulkan)
+#
+#
+
 add_library(
     RendererVk  
     STATIC
@@ -115,6 +170,19 @@ target_compile_definitions(
     PRIVATE
     VULKAN=1
 )
+
+set_target_properties(
+    RendererVk
+    PROPERTIES
+    FOLDER
+    Libraries/Vulkan
+)
+
+#
+#
+# OS
+#
+#
 
 set(
     OS_source_files
@@ -160,6 +228,8 @@ set(
     ${CMAKE_SOURCE_DIR}/Common_3/OS/Math/Noise.cpp
     ${CMAKE_SOURCE_DIR}/Common_3/OS/Math/Noise.h
     ${CMAKE_SOURCE_DIR}/Common_3/OS/Math/vmInclude.h
+    # ${CMAKE_SOURCE_DIR}/Common_3/OS/MemoryTracking/dlmalloc.cc
+    ${CMAKE_SOURCE_DIR}/Common_3/OS/MemoryTracking/malloc-2.8.6.h
     ${CMAKE_SOURCE_DIR}/Common_3/OS/MemoryTracking/MemoryTrackingManager.cpp
     ${CMAKE_SOURCE_DIR}/Common_3/OS/UI/Fontstash.cpp
     ${CMAKE_SOURCE_DIR}/Common_3/OS/UI/Fontstash.h
@@ -221,6 +291,26 @@ target_compile_definitions(
     DIRECT3D12=1
 )
 
+set_target_properties(
+    OSDX12
+    PROPERTIES
+    FOLDER
+    Libraries/Direct3D12
+)
+
+set_target_properties(
+    OSVk
+    PROPERTIES
+    FOLDER
+    Libraries/Vulkan
+)
+
+#
+#
+# SpirvTools
+#
+#
+
 add_library(
     SpirvTools
     SHARED
@@ -249,88 +339,63 @@ target_compile_definitions(
     API_EXPORT=1
 )
 
+set_target_properties(
+    SpirvTools
+    PROPERTIES
+    FOLDER
+    Libraries/Vulkan
+)
+
+#
+#
+# TransformationsVk
+#
+#
+
+file(
+    GLOB 
+    TransformationsVk_shader_source_files
+    "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/*.vert"
+    "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/*.frag"
+    "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/*.tesc"
+    "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/*.tese"
+    "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/*.comp"
+    "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/*.geom"
+)
+
 add_executable(
     TransformationsVk
     ${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/01_Transformations.cpp
-    ${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.vert
-    ${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.frag
-    ${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.vert
-    ${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.frag
+    ${TransformationsVk_shader_source_files}
 )
+
+source_group("Shader Files" FILES ${TransformationsVk_shader_source_files})
 
 make_directory( "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/" )
 make_directory( "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/" )
 make_directory( "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/" )
 make_directory( "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/Binary/" )
 
-add_custom_command(
-    TARGET
-    TransformationsVk
-    PRE_BUILD
-
-    DEPENDS "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.vert"
-    DEPENDS "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.frag"
-    DEPENDS "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.vert"
-    DEPENDS "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.frag"
-
-    COMMAND
-        $ENV{VK_SDK_PATH}/bin/glslangValidator.exe
-        -V "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.vert"
-        -o "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/basic.vert.spv"
-    COMMAND
-        $ENV{VK_SDK_PATH}/bin/glslangValidator.exe
-        -V "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.frag"
-        -o "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/basic.frag.spv"
-    COMMAND
-        $ENV{VK_SDK_PATH}/bin/glslangValidator.exe
-        -V "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.vert"
-        -o "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/skybox.vert.spv"
-    COMMAND
-        $ENV{VK_SDK_PATH}/bin/glslangValidator.exe
-        -V "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.frag"
-        -o "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/skybox.frag.spv"
-    
-    COMMAND ${CMAKE_COMMAND}
-        -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.vert"
-        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/"
-    COMMAND ${CMAKE_COMMAND}
-        -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/basic.frag"
-        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/"
-    COMMAND ${CMAKE_COMMAND}
-        -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.vert"
-        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/"
-    COMMAND ${CMAKE_COMMAND}
-        -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/skybox.frag"
-        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/"
-    
-    COMMAND ${CMAKE_COMMAND}
-        -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/basic.vert.spv"
-        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/Binary/"
-    COMMAND ${CMAKE_COMMAND}
-        -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/basic.frag.spv"
-        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/Binary/"
-    COMMAND ${CMAKE_COMMAND}
-        -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/skybox.vert.spv"
-        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/Binary/"
-    COMMAND ${CMAKE_COMMAND}
-        -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/Examples_3/Unit_Tests/src/01_Transformations/PCVulkan/Binary/skybox.frag.spv"
-        "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/Binary/"
-
-    COMMENT Building shaders ...
-    VERBATIM
-)
-
-# link_directories(
-#     $ENV{VK_SDK_PATH}/lib
-# )
+foreach( TransformationsVk_shader_source_file ${TransformationsVk_shader_source_files} )
+    message(STATUS "Adding ${TransformationsVk_shader_source_file} for glslangValidator build")
+    add_custom_command(
+        TARGET
+        TransformationsVk
+        PRE_BUILD
+        COMMAND
+            $ENV{VK_SDK_PATH}/bin/glslangValidator.exe
+            -V "${TransformationsVk_shader_source_file}"
+            -o "${TransformationsVk_shader_source_file}.spv"
+        COMMAND ${CMAKE_COMMAND}
+            -E copy_if_different
+            "${TransformationsVk_shader_source_file}"
+            "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/"
+        COMMAND ${CMAKE_COMMAND}
+            -E copy_if_different
+            "${TransformationsVk_shader_source_file}.spv"
+            "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Transformations/PCVulkan/Binary/"
+    )
+endforeach()
 
 target_include_directories(
     TransformationsVk
@@ -357,10 +422,119 @@ target_compile_definitions(
 set_target_properties(
     TransformationsVk
     PROPERTIES
+    FOLDER
+    UnitTests/Vulkan
     VS_DEBUGGER_WORKING_DIRECTORY
     "$(OutDir)"
 )
 
+#
+#
+# SceneViewer
+#
+#
+
+file(
+    GLOB 
+    SceneViewerVk_shader_source_files
+    "${CMAKE_SOURCE_DIR}/Examples_3/SceneViewer/src/PCVulkan/*.vert"
+    "${CMAKE_SOURCE_DIR}/Examples_3/SceneViewer/src/PCVulkan/*.frag"
+    "${CMAKE_SOURCE_DIR}/Examples_3/SceneViewer/src/PCVulkan/*.tesc"
+    "${CMAKE_SOURCE_DIR}/Examples_3/SceneViewer/src/PCVulkan/*.tese"
+    "${CMAKE_SOURCE_DIR}/Examples_3/SceneViewer/src/PCVulkan/*.comp"
+    "${CMAKE_SOURCE_DIR}/Examples_3/SceneViewer/src/PCVulkan/*.geom"
+)
+
+add_executable(
+    SceneViewerVk
+    ${CMAKE_SOURCE_DIR}/Examples_3/SceneViewer/src/Scene.h
+    ${CMAKE_SOURCE_DIR}/Examples_3/SceneViewer/src/Scene.cpp
+    # ${CMAKE_SOURCE_DIR}/Examples_3/SceneViewer/src/Geometry.h
+    # ${CMAKE_SOURCE_DIR}/Examples_3/SceneViewer/src/Geometry.cpp
+    ${CMAKE_SOURCE_DIR}/Examples_3/SceneViewer/src/SceneViewer.cpp
+    ${SceneViewerVk_shader_source_files}
+)
+
+add_dependencies(
+    SceneViewerVk
+    spdlog
+    flatbuffers
+    FbxPipeline
+)
+
+source_group("Shader Files" FILES ${SceneViewerVk_shader_source_files})
+
+make_directory( "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/SceneViewer/" )
+make_directory( "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/SceneViewer/PCVulkan/" )
+make_directory( "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/SceneViewer/PCVulkan/Binary/" )
+
+foreach( SceneViewerVk_shader_source_file ${SceneViewerVk_shader_source_files} )
+    message(STATUS "Adding ${SceneViewerVk_shader_source_file} for glslangValidator build")
+    add_custom_command(
+        TARGET
+        SceneViewerVk
+        DEPENDS "${SceneViewerVk_shader_source_file}"
+        POST_BUILD
+        COMMAND
+            $ENV{VK_SDK_PATH}/bin/glslangValidator.exe
+            "${CMAKE_SOURCE_DIR}/Examples_3/SceneViewer/src/PCVulkan/config.conf"
+            -V "${SceneViewerVk_shader_source_file}"
+            -o "${SceneViewerVk_shader_source_file}.spv"
+        COMMAND ${CMAKE_COMMAND}
+            -E copy_if_different
+            "${SceneViewerVk_shader_source_file}"
+            "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/SceneViewer/PCVulkan/"
+        COMMAND ${CMAKE_COMMAND}
+            -E copy_if_different
+            "${SceneViewerVk_shader_source_file}.spv"
+            "${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/SceneViewer/PCVulkan/Binary/"
+    )
+endforeach()
+
+target_include_directories(
+    SceneViewerVk
+    PUBLIC
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/FbxPipeline
+    ${CMAKE_SOURCE_DIR}/Common_3
+    ${flatbuffers_source_dir}/include
+    ${flatbuffers_source_dir}/grpc
+    $ENV{VK_SDK_PATH}/include
+)
+
+target_link_libraries(
+    SceneViewerVk
+    OSVk
+    RendererVk
+    SpirvTools
+    
+    debug ${flatbuffers_binary_dir}/Debug/flatbuffers.lib
+    optimized ${flatbuffers_binary_dir}/Release/flatbuffers.lib
+    # ${flatbuffers_binary_dir}/libflatbuffers.a
+
+    $ENV{VK_SDK_PATH}/lib/vulkan-1.lib
+)
+
+target_compile_definitions(
+    SceneViewerVk
+    PRIVATE
+    VULKAN=1
+)
+
+set_target_properties(
+    SceneViewerVk
+    PROPERTIES
+    FOLDER
+    Projects/Vulkan
+    VS_DEBUGGER_WORKING_DIRECTORY
+    "$(OutDir)"
+)
+
+#
+#
+# Finalization
+#
+#
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PREDEFINED_TARGETS_FOLDER "CustomTargets")

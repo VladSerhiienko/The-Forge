@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2018 Confetti Interactive Inc.
- * 
+ *
  * This file is part of The-Forge
  * (see https://github.com/ConfettiFX/The-Forge).
- * 
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -11,9 +11,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -286,12 +286,12 @@ namespace RENDERER_CPP_NAMESPACE {
        conf_free((void*)p_var);      \
     }
 
-#if defined(__cplusplus)  
+#if defined(__cplusplus)
 #define DECLARE_ZERO(type, var) \
-            type var = {};                        
+            type var = {};
 #else
 #define DECLARE_ZERO(type, var) \
-            type var = {0};                        
+            type var = {0};
 #endif
 
 	// Internal utility functions (may become external one day)
@@ -341,8 +341,8 @@ namespace RENDERER_CPP_NAMESPACE {
   {
 	  ASSERT(pRenderer);
 
-	  DynamicMemoryAllocator* pAllocator = (DynamicMemoryAllocator*)conf_calloc(1, sizeof(*pAllocator));
-	  pAllocator->mCurrentPos = 0;
+      DynamicMemoryAllocator* pAllocator = conf_placement_new< DynamicMemoryAllocator >( conf_calloc( 1, sizeof( *pAllocator ) ) );
+      pAllocator->mCurrentPos = 0;
 	  pAllocator->mSize = size;
 	  pAllocator->pAllocationMutex = conf_placement_new<Mutex>(conf_calloc(1, sizeof(Mutex)));
 
@@ -470,7 +470,7 @@ namespace RENDERER_CPP_NAMESPACE {
   /************************************************************************/
   void add_descriptor_heap(Renderer* pRenderer, uint32_t numDescriptorSets, VkDescriptorPoolCreateFlags flags, VkDescriptorPoolSize* pPoolSizes, uint32_t numPoolSizes, DescriptorStoreHeap** ppHeap)
   {
-	  DescriptorStoreHeap* pHeap = (DescriptorStoreHeap*)conf_calloc(1, sizeof(*pHeap));
+      DescriptorStoreHeap* pHeap = conf_placement_new< DescriptorStoreHeap>(conf_calloc(1, sizeof(*pHeap)));
 	  pHeap->pAllocationMutex = conf_placement_new<Mutex>(conf_calloc(1, sizeof(Mutex)));
 	  pHeap->mFlags = flags;
 	  pHeap->mNumDescriptorSets = numDescriptorSets;
@@ -548,7 +548,7 @@ namespace RENDERER_CPP_NAMESPACE {
 	  /// Array of image descriptors per update frequency
 	  VkDescriptorImageInfo*	pImageInfo[DESCRIPTOR_UPDATE_FREQ_COUNT];
 	  /// Triple buffered Hash map to check if a descriptor table with a descriptor hash already exists to avoid redundant copy descriptors operations
-	  /// 
+	  ///
 	  DescriptorSetMap			mStaticDescriptorSetMap[MAX_FRAMES_IN_FLIGHT];
 	  /// Triple buffered array of number of descriptor tables allocated per update frequency
 	  /// Only used for recording stats
@@ -562,7 +562,7 @@ namespace RENDERER_CPP_NAMESPACE {
 
   void add_descriptor_manager(Renderer* pRenderer, RootSignature* pRootSignature, DescriptorManager** ppManager)
   {
-	  DescriptorManager* pManager = (DescriptorManager*)conf_calloc(1, sizeof(*pManager));
+      DescriptorManager* pManager = conf_placement_new<DescriptorManager>(conf_calloc(1, sizeof(*pManager)));
 	  pManager->pRootSignature = pRootSignature;
 	  pManager->mFrameIdx = -1;
 
@@ -926,7 +926,7 @@ namespace RENDERER_CPP_NAMESPACE {
 
   void addRenderPass(Renderer* pRenderer, const RenderPassDesc* pDesc, RenderPass** ppRenderPass)
   {
-	  RenderPass* pRenderPass = (RenderPass*)conf_calloc(1, sizeof(*pRenderPass));
+      RenderPass* pRenderPass = conf_placement_new<RenderPass>(conf_calloc(1, sizeof(*pRenderPass)));
 	  pRenderPass->mDesc = *pDesc;
 	  /************************************************************************/
 	  // Add render pass
@@ -1109,7 +1109,7 @@ namespace RENDERER_CPP_NAMESPACE {
 
   void addQueryHeap(Renderer* pRenderer, const QueryHeapDesc* pDesc, QueryHeap** ppQueryHeap)
   {
-	  QueryHeap* pQueryHeap = (QueryHeap*)conf_calloc(1, sizeof(*pQueryHeap));
+      QueryHeap* pQueryHeap = conf_placement_new< QueryHeap>(conf_calloc(1, sizeof(*pQueryHeap)));
 	  pQueryHeap->mDesc = *pDesc;
 
 	  VkQueryPoolCreateInfo createInfo = {};
@@ -1287,7 +1287,8 @@ namespace RENDERER_CPP_NAMESPACE {
 	// -------------------------------------------------------------------------------------------------
 	void initRenderer(const char *app_name, const RendererDesc * settings, Renderer** ppRenderer)
 	{
-		Renderer* pRenderer = (Renderer*)conf_calloc (1, sizeof (*pRenderer));
+		Renderer* pRenderer = conf_placement_new<Renderer>(conf_calloc(1, sizeof(*pRenderer)));
+        //(Renderer*)conf_calloc (1, sizeof (*pRenderer));
 		ASSERT(pRenderer);
 
 		// Copy settings
@@ -1517,7 +1518,7 @@ namespace RENDERER_CPP_NAMESPACE {
 			LOGERRORF("Cannot create queue of type (%u)", pDesc->mType);
 		}
 	}
-	
+
 	void removeQueue(Queue* pQueue)
 	{
 		ASSERT(pQueue != NULL);
@@ -1579,7 +1580,7 @@ namespace RENDERER_CPP_NAMESPACE {
 		ASSERT(VK_NULL_HANDLE != pCmdPool->pRenderer->pDevice);
 		ASSERT(VK_NULL_HANDLE != pCmdPool->pVkCmdPool);
 
-		Cmd* pCmd = (Cmd*)conf_calloc(1, sizeof(*pCmd));
+        Cmd* pCmd = conf_placement_new<Cmd>(conf_calloc(1, sizeof(*pCmd)));
 		ASSERT(pCmd);
 
 		pCmd->pCmdPool = pCmdPool;
@@ -1900,7 +1901,7 @@ namespace RENDERER_CPP_NAMESPACE {
 		ASSERT(pDesc->mSize > 0);
 		ASSERT(VK_NULL_HANDLE != pRenderer->pDevice);
 
-		Buffer* pBuffer = (Buffer*)conf_calloc(1, sizeof(*pBuffer));
+        Buffer* pBuffer = conf_placement_new<Buffer>(conf_calloc(1, sizeof(Buffer)));
 		ASSERT(pBuffer);
 
 		pBuffer->pRenderer = pRenderer;
@@ -1986,10 +1987,10 @@ namespace RENDERER_CPP_NAMESPACE {
 			return;
 		}
 
-		Texture* pTexture = (Texture*)conf_calloc(1, sizeof(*pTexture));
-		ASSERT(pTexture);
+        Texture* pTexture = conf_placement_new< Texture >( conf_calloc( 1, sizeof( *pTexture ) ) );
+        ASSERT( pTexture );
 
-		pTexture->pRenderer = pRenderer;
+        pTexture->pRenderer = pRenderer;
 		pTexture->mDesc = *pDesc;
 		pTexture->pCpuMappedAddress = NULL;
 		// Monotonically increasing thread safe id generation
@@ -4400,7 +4401,7 @@ namespace RENDERER_CPP_NAMESPACE {
                             break;
                         }
                      }
-					
+
 				}
 				SAFE_FREE((void*)properties);
 			}
@@ -4453,7 +4454,7 @@ namespace RENDERER_CPP_NAMESPACE {
 				create_info.pNext = NULL;
 				create_info.pfnCallback = internal_debug_report_callback;
 				create_info.pUserData = NULL;
-				create_info.flags = 
+				create_info.flags =
 					VK_DEBUG_REPORT_WARNING_BIT_EXT |
 					// VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | Performance warnings are not very vaild on desktop
 					VK_DEBUG_REPORT_ERROR_BIT_EXT |
