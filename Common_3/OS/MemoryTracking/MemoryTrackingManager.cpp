@@ -32,6 +32,27 @@
 #include <time.h>
 
 //#define ALLOW_DLMALLOC
+#undef conf_malloc
+#undef conf_free
+
+void* conf_malloc(size_t size)
+{
+	return malloc(size);
+}
+
+void conf_free(void* ptr)
+{
+	free(ptr);
+}
+
+// Just include the cpp here so we don't have to add it to the all projects
+#include "../../ThirdParty/OpenSource/FluidStudios/MemoryManager/mmgr.cpp"
+#else
+#undef malloc
+#undef calloc
+#undef realloc
+#undef free
+#include <cstdlib>
 
 //#define ONLY_MSPACES 1
 #define MSPACES 1
@@ -122,6 +143,7 @@ namespace confetti {
 void *operator new( size_t size ) {
     return confetti::allocate( size );
 }
+#endif
 
 void *operator new[]( size_t size ) {
     return confetti::allocate( size );
