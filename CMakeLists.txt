@@ -169,6 +169,7 @@ target_compile_definitions(
     RendererVk
     PRIVATE
     VULKAN=1
+    USE_MEMORY_TRACKING=1
 )
 
 set_target_properties(
@@ -270,6 +271,7 @@ target_compile_definitions(
     OSVk
     PRIVATE
     VULKAN=1
+    USE_MEMORY_TRACKING=1    
 )
 
 add_library(
@@ -417,6 +419,7 @@ target_compile_definitions(
     TransformationsVk
     PRIVATE
     VULKAN=1
+    USE_MEMORY_TRACKING=1    
 )
 
 set_target_properties(
@@ -519,6 +522,7 @@ target_compile_definitions(
     SceneViewerVk
     PRIVATE
     VULKAN=1
+    USE_MEMORY_TRACKING=1    
 )
 
 set_target_properties(

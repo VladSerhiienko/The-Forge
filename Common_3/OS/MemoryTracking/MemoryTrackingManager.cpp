@@ -30,36 +30,17 @@
 
 #include <new>
 #include <time.h>
-
-//#define ALLOW_DLMALLOC
-#undef conf_malloc
-#undef conf_free
-
-void* conf_malloc(size_t size)
-{
-	return malloc(size);
-}
-
-void conf_free(void* ptr)
-{
-	free(ptr);
-}
-
-// Just include the cpp here so we don't have to add it to the all projects
-#include "../../ThirdParty/OpenSource/FluidStudios/MemoryManager/mmgr.cpp"
-#else
-#undef malloc
-#undef calloc
-#undef realloc
-#undef free
 #include <cstdlib>
 
-//#define ONLY_MSPACES 1
 #define MSPACES 1
 #define USE_DL_PREFIX 1
 #define MALLOC_ALIGNMENT ( confetti::DEFAULT_ALIGNMENT )
-//#include "malloc-2.8.6.h"
 #include "dlmalloc.cc"
+
+#undef conf_malloc
+#undef conf_calloc
+#undef conf_realloc
+#undef conf_free
 
 void *conf_malloc( size_t size ) {
     return confetti::allocate( size );
@@ -77,11 +58,11 @@ void conf_free( void *p ) {
     confetti::deallocate( p );
 }
 
-static thread_local mspace tlms = create_mspace(0, 0);
+static thread_local mspace tlms = create_mspace( 0, 0 );
 
 namespace confetti {
     void *allocate( size_t size, size_t alignment ) {
-#if defined( ALLOW_DLMALLOC )
+#if defined( USE_DLMALLOC )
 
         (void) alignment;
         return dlmalloc( size );
@@ -97,8 +78,22 @@ namespace confetti {
 #endif
     }
 
+    void *callocate( size_t num, size_t size, size_t alignment ) {
+#if defined( USE_DLMALLOC )
+
+        (void) alignment;
+        return dlcalloc( num, size );
+
+#elif defined( __ANDROID__ )
+        static_assert(true, "Not implemented.");
+#else
+        (void) alignment;
+        return ::calloc( num, size );
+#endif
+    }
+
     void *reallocate( void *p, size_t size, size_t alignment ) {
-#if defined( ALLOW_DLMALLOC )
+#if defined( USE_DLMALLOC )
 
         (void) alignment;
         return dlrealloc( p, size );
@@ -113,7 +108,7 @@ namespace confetti {
     }
 
     void deallocate( void *p ) {
-#if defined( ALLOW_DLMALLOC )
+#if defined( USE_DLMALLOC )
 
         return dlfree( p );
 
@@ -143,7 +138,6 @@ namespace confetti {
 void *operator new( size_t size ) {
     return confetti::allocate( size );
 }
-#endif
 
 void *operator new[]( size_t size ) {
     return confetti::allocate( size );
@@ -198,3 +192,8 @@ void operator delete( void *p ) throw( ) {
 void operator delete[]( void *p ) throw( ) {
     confetti::deallocate( p );
 }
+
+#if defined( USE_MEMORY_TRACKING )
+// Just include the cpp here so we don't have to add it to the all projects
+#include "ThirdParty/OpenSource/FluidStudios/MemoryManager/mmgr.cpp"
+#endif

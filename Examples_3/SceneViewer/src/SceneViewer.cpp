@@ -174,7 +174,7 @@ WindowsDesc			gWindow = {};
 /// Camera controller functionality
 #if USE_CAMERACONTROLLER
 #ifndef _DURANGO
-bool cameraMouseMove(const MouseMoveEventData* data)
+bool cameraMouseMove(const RawMouseMoveEventData* data)
 {
     pCameraController->onMouseMove(data);
     return true;
@@ -206,7 +206,7 @@ void CreateCameraController(const vec3& camPos, const vec3& lookAt, const Camera
     pCameraController->setMotionParameters(motion);
 
 #ifndef _DURANGO
-    registerMouseMoveEvent(cameraMouseMove);
+    registerRawMouseMoveEvent(cameraMouseMove);
     registerMouseButtonEvent(cameraMouseButton);
     registerMouseWheelEvent(cameraMouseWheel);
 #endif
@@ -229,68 +229,6 @@ void RecenterCameraView(float maxDistance, vec3 lookAt = vec3(0))
 }
 #else
 #endif
-
-// Generates an array of vertices and normals for a sphere
-void generateSpherePoints(float **ppPoints, int *pNumberOfPoints, int numberOfDivisions)
-{
-    float numStacks = (float)numberOfDivisions;
-    float numSlices = (float)numberOfDivisions;
-    float radius = 0.5f; // Diameter of 1
-
-    tinystl::vector<vec3> vertices;
-    tinystl::vector<vec3> normals;
-
-    for (int i = 0; i < numberOfDivisions; i++)
-    {
-        for (int j = 0; j < numberOfDivisions; j++)
-        {
-            // Sectioned into quads, utilizing two triangles
-            vec3 topLeftPoint = { (float)(-cos(2.0f * gPi * i / numStacks) * sin(gPi * (j + 1.0f) / numSlices)),
-                (float)(-cos(gPi * (j + 1.0f) / numSlices)),
-                (float)(sin(2.0f * gPi * i / numStacks) * sin(gPi * (j + 1.0f) / numSlices)) };
-            vec3 topRightPoint = { (float)(-cos(2.0f * gPi * (i + 1.0) / numStacks) * sin(gPi * (j + 1.0) / numSlices)),
-                (float)(-cos(gPi * (j + 1.0) / numSlices)),
-                (float)(sin(2.0f * gPi * (i + 1.0) / numStacks) * sin(gPi * (j + 1.0) / numSlices)) };
-            vec3 botLeftPoint = { (float)(-cos(2.0f * gPi * i / numStacks) * sin(gPi * j / numSlices)),
-                (float)(-cos(gPi * j / numSlices)),
-                (float)(sin(2.0f * gPi * i / numStacks) * sin(gPi * j / numSlices)) };
-            vec3 botRightPoint = { (float)(-cos(2.0f * gPi * (i + 1.0) / numStacks) * sin(gPi * j / numSlices)),
-                (float)(-cos(gPi * j / numSlices)),
-                (float)(sin(2.0f * gPi * (i + 1.0) / numStacks) * sin(gPi * j / numSlices)) };
-
-            // Top right triangle
-            vertices.push_back(radius * topLeftPoint);
-            vertices.push_back(radius * botRightPoint);
-            vertices.push_back(radius * topRightPoint);
-            normals.push_back(normalize(topLeftPoint));
-            normals.push_back(normalize(botRightPoint));
-            normals.push_back(normalize(topRightPoint));
-
-            // Bot left triangle
-            vertices.push_back(radius * topLeftPoint);
-            vertices.push_back(radius * botLeftPoint);
-            vertices.push_back(radius * botRightPoint);
-            normals.push_back(normalize(topLeftPoint));
-            normals.push_back(normalize(botLeftPoint));
-            normals.push_back(normalize(botRightPoint));
-        }
-    }
-
-    *pNumberOfPoints = vertices.getCount() * 3 * 2;
-    (*ppPoints) = (float *)conf_malloc(sizeof(float) * (*pNumberOfPoints));
-
-    for (uint32_t i = 0; i < vertices.getCount(); i++)
-    {
-        vec3 vertex = vertices[i];
-        vec3 normal = normals[i];
-        (*ppPoints)[i * 6 + 0] = vertex.getX();
-        (*ppPoints)[i * 6 + 1] = vertex.getY();
-        (*ppPoints)[i * 6 + 2] = vertex.getZ();
-        (*ppPoints)[i * 6 + 3] = normal.getX();
-        (*ppPoints)[i * 6 + 4] = normal.getY();
-        (*ppPoints)[i * 6 + 5] = normal.getZ();
-    }
-}
 
 void addSwapChain()
 {

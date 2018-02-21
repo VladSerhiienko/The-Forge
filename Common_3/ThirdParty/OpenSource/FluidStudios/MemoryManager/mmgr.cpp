@@ -1,12 +1,12 @@
 // ---------------------------------------------------------------------------------------------------------------------------------
-//                                                      
-//                                                      
-//  _ __ ___  _ __ ___   __ _ _ __      ___ _ __  _ __  
-// | '_ ` _ \| '_ ` _ \ / _` | '__|    / __| '_ \| '_ \ 
+//
+//
+//  _ __ ___  _ __ ___   __ _ _ __      ___ _ __  _ __
+// | '_ ` _ \| '_ ` _ \ / _` | '__|    / __| '_ \| '_ \
 // | | | | | | | | | | | (_| | |    _ | (__| |_) | |_) |
-// |_| |_| |_|_| |_| |_|\__, |_|   (_) \___| .__/| .__/ 
-//                       __/ |             | |   | |    
-//                      |___/              |_|   |_|    
+// |_| |_| |_|_| |_| |_|\__, |_|   (_) \___| .__/| .__/
+//                       __/ |             | |   | |
+//                      |___/              |_|   |_|
 //
 // Memory manager & tracking software
 //
@@ -59,7 +59,7 @@
 // 5. With MFC applications, you will need to comment out any occurance of "#define new DEBUG_NEW" from all source files.
 //
 // 6. Include file dependencies are _very_important_ for getting the MMGR to integrate nicely into your application. Be careful if
-//    you're including standard includes from within your own project includes; that will break this very specific dependency order. 
+//    you're including standard includes from within your own project includes; that will break this very specific dependency order.
 //    It should look like this:
 //
 //		#include <stdio.h>   // Standard includes MUST come first
@@ -84,7 +84,7 @@
 #include <time.h>
 #include <stdarg.h>
 #include <new>
-#include "../../../../OS/Interfaces/IOperatingSystem.h"
+#include "OS/Interfaces/IOperatingSystem.h"
 
 #if !defined(WIN32) && !defined(DURANGO)
 #include <unistd.h>
@@ -100,7 +100,7 @@
 //
 // Whether this software causes your application to crash, or if it reports errors, you need to be able to TRUST this software. To
 // this end, you are given some very simple debugging tools.
-// 
+//
 // The quickest way to locate problems is to enable the STRESS_TEST macro (below.) This should catch 95% of the crashes before they
 // occur by validating every allocation each time this memory manager performs an allocation function. If that doesn't work, keep
 // reading...
@@ -111,7 +111,7 @@
 // report the name of the routine.
 //
 // Just because this memory manager crashes does not mean that there is a bug here! First, an application could inadvertantly damage
-// the heap, causing malloc(), realloc() or free() to crash. Also, an application could inadvertantly damage some of the memory used
+// the heap, causing m_internal_malloc(), m_internal_realloc() or m_internal_free() to crash. Also, an application could inadvertantly damage some of the memory used
 // by this memory tracking software, causing it to crash in much the same way that a damaged heap would affect the standard
 // allocation routines.
 //
@@ -202,6 +202,16 @@ extern void debugger(const char *message);
 #undef	calloc
 #undef	realloc
 #undef	free
+
+void *conf_malloc( size_t size );
+void *conf_calloc( size_t count, size_t size );
+void *conf_realloc( void *p, size_t size );
+void  conf_free( void *p );
+
+#define m_internal_malloc conf_malloc
+#define m_internal_calloc conf_calloc
+#define m_internal_realloc conf_realloc
+#define m_internal_free conf_free
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Defaults for the constants & statics in the MemoryManager class
@@ -620,9 +630,9 @@ static	void	dumpLeakReport()
 		{
 			for (unsigned int i = 0; i < reservoirBufferSize; i++)
 			{
-				free(reservoirBuffer[i]);
+				m_internal_free(reservoirBuffer[i]);
 			}
-			free(reservoirBuffer);
+			m_internal_free(reservoirBuffer);
 			reservoirBuffer = 0;
 			reservoirBufferSize = 0;
 			reservoir = NULL;
@@ -843,7 +853,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 		{
 			// Allocate 256 reservoir elements
 
-			reservoir = (sAllocUnit *)malloc(sizeof(sAllocUnit) * 256);
+			reservoir = (sAllocUnit *)m_internal_malloc(sizeof(sAllocUnit) * 256);
 
 			// If you hit this assert, then the memory manager failed to allocate internal memory for tracking the
 			// allocations
@@ -867,7 +877,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 
 			// Add this address to our reservoirBuffer so we can free it later
 
-			sAllocUnit	**temp = (sAllocUnit **)realloc(reservoirBuffer, (reservoirBufferSize + 1) * sizeof(sAllocUnit *));
+			sAllocUnit	**temp = (sAllocUnit **)m_internal_realloc(reservoirBuffer, (reservoirBufferSize + 1) * sizeof(sAllocUnit *));
 			m_assert(temp);
 			if (temp)
 			{
@@ -893,7 +903,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 		double	b = RAND_MAX / 100.0 * RANDOM_FAILURE;
 		if (a > b)
 		{
-			au->actualAddress = malloc(au->actualSize);
+			au->actualAddress = m_internal_malloc(au->actualSize);
 		}
 		else
 		{
@@ -901,7 +911,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 			au->actualAddress = NULL;
 		}
 #else
-		au->actualAddress = malloc(au->actualSize);
+		au->actualAddress = m_internal_malloc(au->actualSize);
 #endif
 		au->reportedSize = reportedSize;
 		au->reportedAddress = calculateReportedAddress(au->actualAddress);
@@ -956,7 +966,7 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 
 		wipeWithPattern(au, unusedPattern);
 
-		// calloc() expects the reported memory address range to be filled with 0's
+		// m_internal_calloc() expects the reported memory address range to be filled with 0's
 
 		if (allocationType == m_alloc_calloc)
 		{
@@ -1084,14 +1094,14 @@ void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const
 		double	b = RAND_MAX / 100.0 * RANDOM_FAILURE;
 		if (a > b)
 		{
-			newActualAddress = realloc(au->actualAddress, newActualSize);
+			newActualAddress = m_internal_realloc(au->actualAddress, newActualSize);
 		}
 		else
 		{
 			log("[F] Random faiure");
 		}
 #else
-		newActualAddress = realloc(au->actualAddress, newActualSize);
+		newActualAddress = m_internal_realloc(au->actualAddress, newActualSize);
 #endif
 
 		// We don't want to assert with random failures, because we want the application to deal with them.
@@ -1237,8 +1247,8 @@ void	m_deallocator(const char *sourceFile, const unsigned int sourceLine, const 
 
 		if (alwaysLogAll) log("[-] ----- %8s of addr 0x%08zX           by %s", allocationTypes[deallocationType], reinterpret_cast<size_t>(const_cast<void *>(reportedAddress)), ownerString(sourceFile, sourceLine, sourceFunc));
 
-		// We should only ever get here with a null pointer if they try to do so with a call to free() (delete[] and delete will
-		// both bail before they get here.) So, since ANSI allows free(NULL), we'll not bother trying to actually free the allocated
+		// We should only ever get here with a null pointer if they try to do so with a call to m_internal_free() (delete[] and delete will
+		// both bail before they get here.) So, since ANSI allows m_internal_free(NULL), we'll not bother trying to actually free the allocated
 		// memory or track it any further.
 
 		if (reportedAddress)
@@ -1283,7 +1293,7 @@ void	m_deallocator(const char *sourceFile, const unsigned int sourceLine, const 
 
 			// Do the deallocation
 
-			free(au->actualAddress);
+			m_internal_free(au->actualAddress);
 
 			// Remove this allocation unit from the hash table
 
@@ -1570,12 +1580,12 @@ sMStats	m_getMemoryStatistics()
 #include "nommgr.h"
 char* LogToMemory(char* log)
 {
-	static char* logMemory = (char*)calloc(1, sizeof(char));
+	static char* logMemory = (char*)m_internal_calloc(1, sizeof(char));
 	static size_t memoryLength = 1;
 
 	size_t logLength = strlen(log) + 1;
 
-	logMemory = (char*)realloc(logMemory, memoryLength + logLength - 1);
+	logMemory = (char*)m_internal_realloc(logMemory, memoryLength + logLength - 1);
 	memcpy(logMemory + memoryLength - 1, log, logLength);
 
 	memoryLength += logLength - 1;
@@ -1585,7 +1595,7 @@ char* LogToMemory(char* log)
 
 MUTEX* CreateMutex()
 {
-	MUTEX* mutex = (MUTEX*)malloc(sizeof(MUTEX));
+	MUTEX* mutex = (MUTEX*)m_internal_malloc(sizeof(MUTEX));
 	new(mutex) MUTEX();
 
 #ifdef WIN32
@@ -1602,7 +1612,7 @@ void RemoveMutex(MUTEX*& mutex)
 		DeleteCriticalSection(mutex);
 #endif
 		(mutex)->MUTEX::~MUTEX();
-		free(mutex);
+		m_internal_free(mutex);
 		mutex = NULL;
 	}
 

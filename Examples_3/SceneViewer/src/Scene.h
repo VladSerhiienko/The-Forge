@@ -1,4 +1,10 @@
 
+
+#include <Common_3/OS/Interfaces/IMemoryManager.h>
+#include <Common_3/OS/Math/MathTypes.h>
+#include <Common_3/Renderer/IRenderer.h>
+#include <Common_3/Renderer/ResourceLoader.h>
+
 #include <map>
 #include <vector>
 
@@ -6,11 +12,6 @@
 #include <flatbuffers/util.h>
 
 #include <FbxPipeline/generated/scene_generated.h>
-
-#include <Common_3/OS/Interfaces/IMemoryManager.h>
-#include <Common_3/OS/Math/MathTypes.h>
-#include <Common_3/Renderer/IRenderer.h>
-#include <Common_3/Renderer/ResourceLoader.h>
 
 struct SceneMaterial {
     float    alphaCutoff;

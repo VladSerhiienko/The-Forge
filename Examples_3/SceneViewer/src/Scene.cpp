@@ -1,6 +1,7 @@
-#include "Scene.h"
 #include "Common_3/OS/Interfaces/ILogManager.h"
 #include "Common_3/OS/Interfaces/IMemoryManager.h"
+
+#include "Scene.h"
 
 uint32 MaterialPropertyGetIndex( uint32_t packed ) {
     const uint32_t valueIndex = ( packed >> 8 ) & 0x0fff;

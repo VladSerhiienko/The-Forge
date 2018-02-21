@@ -23,33 +23,39 @@
 */
 
 #pragma once
-//--------------------------------------------------------------------------------------------
-//
-// Copyright (C) 2009 - 2016 Confetti Special Effects Inc.
-// All rights reserved.
-//
-// This source may not be distributed and/or modified without expressly written permission
-// from Confetti Special Effects Inc.
-//
-//--------------------------------------------------------------------------------------------
 #include <new>
-#ifdef USE_MEMORY_TRACKING
-#include "../../ThirdParty/OpenSource/FluidStudios/MemoryManager/mmgr.h"
+
+#ifndef USE_MEMORY_TRACKING
+#define USE_MEMORY_TRACKING 1
+#endif
+
+#ifndef USE_DLMALLOC
+#define USE_DLMALLOC 1
+#endif
+
+#if defined( USE_MEMORY_TRACKING )
+#include "ThirdParty/OpenSource/FluidStudios/MemoryManager/mmgr.h"
+
+#define conf_malloc( size )           m_allocator( __FILE__, __LINE__, __FUNCTION__, m_alloc_malloc, ( size ) )
+#define conf_calloc( count, size )    m_allocator( __FILE__, __LINE__, __FUNCTION__, m_alloc_calloc, ( ( size ) * ( count ) ) )
+#define conf_realloc( ptr, size )   m_reallocator( __FILE__, __LINE__, __FUNCTION__, m_alloc_realloc, ( size ), ( ptr ) )
+#define conf_free( ptr )            m_deallocator( __FILE__, __LINE__, __FUNCTION__, m_alloc_free, ( ptr ) )
+
+#else
+
+void* conf_malloc( size_t size );
+void* conf_calloc( size_t count, size_t size );
+void* conf_realloc( void* p, size_t size );
+void conf_free( void* p );
+
+#endif
 
 namespace confetti {
+
     /**
      * The default alignment for memory allocations.
      */
     static const size_t DEFAULT_ALIGNMENT = sizeof( void* ) << 1;
-#define conf_malloc(size)		m_allocator		(__FILE__,__LINE__,__FUNCTION__,m_alloc_malloc,(size))
-#define conf_calloc(count,size) m_allocator		(__FILE__,__LINE__,__FUNCTION__,m_alloc_calloc,((size)*(count)))
-#define conf_realloc(ptr,size)	m_reallocator	(__FILE__,__LINE__,__FUNCTION__,m_alloc_realloc,(size),(ptr))
-#define conf_free(ptr)			m_deallocator	(__FILE__,__LINE__,__FUNCTION__,m_alloc_free,(ptr))
-#else
-void* m_allocator(size_t size);
-void* m_allocator(size_t count, size_t size);
-void* m_reallocator(void* ptr, size_t size);
-void m_deallocator(void* ptr);
 
     /**
      * The regular malloc call with aligment.
@@ -59,6 +65,16 @@ void m_deallocator(void* ptr);
      * @return The allocated memory chunk address.
      */
     void* allocate( size_t size, size_t alignment = DEFAULT_ALIGNMENT );
+
+    /**
+     * The regular calloc call with aligment.
+     * Do not align with less then kDefaultAlignment bytes.
+     * @param num Element count.
+     * @param size The byte size of the element.
+     * @param alignment The byte alignment of the memory chunk.
+     * @return The allocated memory chunk address.
+     */
+    void* callocate( size_t num, size_t size, size_t alignment = DEFAULT_ALIGNMENT );
 
     /**
      * The regular realloc call with aligment.
@@ -135,15 +151,6 @@ void m_deallocator(void* ptr);
     struct TNewClass : TNew< alignof( TDerived ), bThreadLocal > {};
 
 } // namespace confetti
-
-//
-// Old interface
-//
-
-void* conf_malloc( size_t size );
-void* conf_calloc( size_t count, size_t size );
-void* conf_realloc( void* p, size_t size );
-void  conf_free( void* p );
 
 #pragma push_macro("new")
 #undef new
