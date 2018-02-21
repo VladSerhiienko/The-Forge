@@ -98,43 +98,45 @@ endif()
 #
 #
 
-add_library(
-    RendererDX12  
-    STATIC
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/Direct3D12/Direct3D12.cpp
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/Direct3D12/Direct3D12Hooks.cpp
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/Direct3D12/Direct3D12Hooks.h
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/Direct3D12/Direct3D12MemoryAllocator.cpp
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/Direct3D12/Direct3D12MemoryAllocator.h
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/Direct3D12/Direct3D12ShaderReflection.cpp
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/CommonShaderReflection.cpp
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/GpuProfiler.cpp
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/GpuProfiler.h
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/IMemoryAllocator.h
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/IRenderer.h
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/IShaderReflection.h
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/ResourceLoader.cpp
-    ${CMAKE_SOURCE_DIR}/Common_3/Renderer/ResourceLoader.h
-)
+if (WIN32)
+    add_library(
+        RendererDX12  
+        STATIC
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/Direct3D12/Direct3D12.cpp
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/Direct3D12/Direct3D12Hooks.cpp
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/Direct3D12/Direct3D12Hooks.h
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/Direct3D12/Direct3D12MemoryAllocator.cpp
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/Direct3D12/Direct3D12MemoryAllocator.h
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/Direct3D12/Direct3D12ShaderReflection.cpp
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/CommonShaderReflection.cpp
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/GpuProfiler.cpp
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/GpuProfiler.h
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/IMemoryAllocator.h
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/IRenderer.h
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/IShaderReflection.h
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/ResourceLoader.cpp
+        ${CMAKE_SOURCE_DIR}/Common_3/Renderer/ResourceLoader.h
+    )
 
-target_include_directories(
-    RendererDX12
-    PUBLIC
-    ${CMAKE_SOURCE_DIR}/Common_3
-)
+    target_include_directories(
+        RendererDX12
+        PUBLIC
+        ${CMAKE_SOURCE_DIR}/Common_3
+    )
 
-target_compile_definitions(
-    RendererDX12
-    PRIVATE
-    DIRECT3D12=1
-)
+    target_compile_definitions(
+        RendererDX12
+        PRIVATE
+        DIRECT3D12=1
+    )
 
-set_target_properties(
-    RendererDX12
-    PROPERTIES
-    FOLDER
-    Libraries/Direct3D12
-)
+    set_target_properties(
+        RendererDX12
+        PROPERTIES
+        FOLDER
+        Libraries/Direct3D12
+    )
+endif()
 
 #
 #
@@ -229,7 +231,6 @@ set(
     ${CMAKE_SOURCE_DIR}/Common_3/OS/Math/Noise.cpp
     ${CMAKE_SOURCE_DIR}/Common_3/OS/Math/Noise.h
     ${CMAKE_SOURCE_DIR}/Common_3/OS/Math/vmInclude.h
-    # ${CMAKE_SOURCE_DIR}/Common_3/OS/MemoryTracking/dlmalloc.cc
     ${CMAKE_SOURCE_DIR}/Common_3/OS/MemoryTracking/malloc-2.8.6.h
     ${CMAKE_SOURCE_DIR}/Common_3/OS/MemoryTracking/MemoryTrackingManager.cpp
     ${CMAKE_SOURCE_DIR}/Common_3/OS/UI/Fontstash.cpp
@@ -251,6 +252,7 @@ set(
     ${CMAKE_SOURCE_DIR}/Common_3/OS/Windows/WindowsLogManager.cpp
     ${CMAKE_SOURCE_DIR}/Common_3/OS/Windows/WindowsThreadManager.cpp
     ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/TinyEXR/tinyexr.cpp
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/FluidStudios/MemoryManager/mmgr.cpp
 )
 
 add_library(
@@ -262,6 +264,7 @@ add_library(
 target_include_directories(
     OSVk
     PUBLIC
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/FluidStudios/MemoryManager
     ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/TinyEXR
     ${CMAKE_SOURCE_DIR}/Common_3
     $ENV{VK_SDK_PATH}/include
@@ -274,38 +277,42 @@ target_compile_definitions(
     USE_MEMORY_TRACKING=1    
 )
 
-add_library(
-    OSDX12
-    STATIC
-    ${OS_source_files}
-)
-
-target_include_directories(
-    OSDX12
-    PUBLIC
-    ${CMAKE_SOURCE_DIR}/Common_3
-    $ENV{VK_SDK_PATH}/include
-)
-
-target_compile_definitions(
-    OSDX12
-    PRIVATE
-    DIRECT3D12=1
-)
-
-set_target_properties(
-    OSDX12
-    PROPERTIES
-    FOLDER
-    Libraries/Direct3D12
-)
-
 set_target_properties(
     OSVk
     PROPERTIES
     FOLDER
     Libraries/Vulkan
 )
+
+if (WIN32)
+
+    add_library(
+        OSDX12
+        STATIC
+        ${OS_source_files}
+    )
+
+    target_include_directories(
+        OSDX12
+        PUBLIC
+        ${CMAKE_SOURCE_DIR}/Common_3
+        $ENV{VK_SDK_PATH}/include
+    )
+
+    target_compile_definitions(
+        OSDX12
+        PRIVATE
+        DIRECT3D12=1
+    )
+
+    set_target_properties(
+        OSDX12
+        PROPERTIES
+        FOLDER
+        Libraries/Direct3D12
+    )
+
+endif()
 
 #
 #

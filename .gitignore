@@ -44,10 +44,10 @@ Art/
 # Vulkan Binary Shaders
 **/PCDX12/Binary/
 **/PCVulkan/Binary/
+**/OSXMetal/Binary/
 **/Resources/
 build_windows_*/
 Common_3/ThirdParty/OpenSource/flatbuffers
-**/OSXMetal/Binary/
 
 # Obj folders
 **/obj/
