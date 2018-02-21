@@ -52,3 +52,7 @@ Common_3/ThirdParty/OpenSource/flatbuffers
 # Obj folders
 **/obj/
 **/bin/
+
+Common_3/ThirdParty/OpenSource/FbxPipeline
+
+Common_3/ThirdParty/OpenSource/spdlog
