@@ -89,6 +89,7 @@ namespace confetti {
 #else
         (void) alignment;
         return ::calloc( num, size );
+        //return ::_aligned_calloc( num, size, alignment );
 #endif
     }
 
@@ -143,8 +144,8 @@ void *operator new[]( size_t size ) {
     return confetti::allocate( size );
 }
 
-void *operator new[]( size_t size, const char * /*name*/, int /*flags*/, unsigned /*debugFlags*/, const char * /*file*/, int /*line*/ ) {
-    return confetti::allocate( size );
+void *operator new[](size_t size, const char * /*name*/, int /*flags*/, unsigned /*debugFlags*/, const char * /*file*/, int /*line*/) {
+    return confetti::allocate(size);
 }
 
 void *operator new[]( size_t size,
