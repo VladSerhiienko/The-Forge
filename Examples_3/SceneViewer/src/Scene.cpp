@@ -185,16 +185,17 @@ void Scene::UpdateMatrices( ) {
     UpdateChildWorldMatrices( 0 );
 }
 
-Scene *LoadSceneFromFile( const char *filename ) {
+std::unique_ptr< Scene > LoadSceneFromFile( const char *filename ) {
     File sceneFile;
     sceneFile.Open( filename, FM_ReadBinary, FSR_Meshes );
 
     String sceneFileString = sceneFile.ReadText( );
 
-    std::unique_ptr< Scene > scene( conf_placement_new< Scene >( conf_malloc( sizeof( Scene ) ) ) );
+    std::unique_ptr< Scene > scene( conf_placement_new< Scene >( conf_calloc(1,  sizeof( Scene ) ) ) );
 
     if ( scene->sourceScene = apemodefb::GetSceneFb( sceneFileString.c_str( ) ) ) {
 
+        std::set< uint32 > meshIds;
         std::set< uint32 > materialIds;
         std::map< uint32, Texture * > textureIdToTexture;
 
@@ -230,6 +231,10 @@ Scene *LoadSceneFromFile( const char *filename ) {
                     childNode.parentId = node.id;
                     return id;
                 } );
+
+                if ( nodeFb->mesh_id( ) != -1 ) {
+                    meshIds.insert( nodeFb->mesh_id( ) );
+                }
 
                 if ( nodeFb->material_ids( ) && nodeFb->material_ids( )->size( ) ) {
                     auto matIdsIt    = nodeFb->material_ids( )->data( );
@@ -285,9 +290,13 @@ Scene *LoadSceneFromFile( const char *filename ) {
         }
 
         if ( auto meshesFb = scene->sourceScene->meshes( ) ) {
-            scene->meshes.reserve( meshesFb->size( ) );
+            // scene->meshes.reserve( meshesFb->size( ) );
+            scene->meshes.reserve( meshIds.size( ) );
 
-            for ( auto meshFb : *meshesFb ) {
+            for ( auto meshId : meshIds ) {
+
+                // for ( auto meshFb : *meshesFb ) {
+                auto meshFb = FlatbuffersTVectorGetAtIndex( meshesFb, meshId );
 
                 assert( meshFb );
                 assert( meshFb->vertices( ) && meshFb->vertices( )->size( ) );
@@ -463,7 +472,7 @@ Scene *LoadSceneFromFile( const char *filename ) {
             }
         }
 
-        return scene.release( );
+        return std::move( scene );
     }
 
     return nullptr;
