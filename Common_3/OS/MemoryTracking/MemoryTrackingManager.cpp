@@ -28,14 +28,61 @@
 #include "../Interfaces/IOperatingSystem.h"
 #include "../Interfaces/IMemoryManager.h"
 
-#include <new>
-#include <time.h>
-#include <cstdlib>
+void *operator new( size_t size ) {
+    return conf_calloc( 1, size );
+}
 
-#define MSPACES 1
-#define USE_DL_PREFIX 1
-#define MALLOC_ALIGNMENT ( confetti::DEFAULT_ALIGNMENT )
-#include "dlmalloc.cc"
+void *operator new[]( size_t size ) {
+    return conf_calloc( 1, size );
+}
+
+void *operator new[](size_t size, const char * /*name*/, int /*flags*/, unsigned /*debugFlags*/, const char * /*file*/, int /*line*/) {
+    return conf_calloc( 1, size );
+}
+
+void *operator new[]( size_t size,
+                      size_t /*alignment*/,
+                      size_t /*alignmentOffset*/,
+                      const char * /*name*/,
+                      int /*flags*/,
+                      unsigned /*debugFlags*/,
+                      const char * /*file*/,
+                      int /*line*/ ) {
+    return conf_calloc( 1, size );
+}
+
+void *operator new( size_t size, size_t /*alignment*/ ) {
+    return conf_calloc( 1, size );
+}
+
+void *operator new( size_t size, size_t /*alignment*/, const std::nothrow_t & ) throw( ) {
+    return conf_calloc( 1, size );
+}
+
+void *operator new[]( size_t size, size_t /*alignment*/ ) {
+    return conf_calloc( 1, size );
+}
+
+void *operator new[]( size_t size, size_t /*alignment*/, const std::nothrow_t & ) throw( ) {
+    return conf_calloc( 1, size );
+}
+
+// C++14 deleter
+void operator delete( void *p, std::size_t /*sz*/ ) throw( ) {
+    conf_free( p );
+}
+
+void operator delete[]( void *p, std::size_t /*sz*/ ) throw( ) {
+    conf_free( p );
+}
+
+void operator delete( void *p ) throw( ) {
+    conf_free( p );
+}
+
+void operator delete[]( void *p ) throw( ) {
+    conf_free( p );
+}
 
 #undef conf_malloc
 #undef conf_calloc
@@ -58,7 +105,20 @@ void conf_free( void *p ) {
     confetti::deallocate( p );
 }
 
+#include <new>
+#include <time.h>
+#include <cstdlib>
+
+#ifdef USE_DLMALLOC
+
+#define MSPACES 1
+#define USE_DL_PREFIX 1
+#define MALLOC_ALIGNMENT ( confetti::DEFAULT_ALIGNMENT )
+#include "dlmalloc.cc"
+
 static thread_local mspace tlms = create_mspace( 0, 0 );
+
+#endif
 
 namespace confetti {
     void *allocate( size_t size, size_t alignment ) {
@@ -134,64 +194,6 @@ namespace confetti {
     void threadLocalDeallocate( void *p ) {
         mspace_free( tlms, p );
     }
-}
-
-void *operator new( size_t size ) {
-    return confetti::allocate( size );
-}
-
-void *operator new[]( size_t size ) {
-    return confetti::allocate( size );
-}
-
-void *operator new[](size_t size, const char * /*name*/, int /*flags*/, unsigned /*debugFlags*/, const char * /*file*/, int /*line*/) {
-    return confetti::allocate(size);
-}
-
-void *operator new[]( size_t size,
-                      size_t alignment,
-                      size_t /*alignmentOffset*/,
-                      const char * /*name*/,
-                      int /*flags*/,
-                      unsigned /*debugFlags*/,
-                      const char * /*file*/,
-                      int /*line*/ ) {
-    return confetti::allocate( size, alignment );
-}
-
-void *operator new( size_t size, size_t alignment ) {
-    return confetti::allocate( size, alignment );
-}
-
-void *operator new( size_t size, size_t alignment, const std::nothrow_t & ) throw( ) {
-    return confetti::allocate( size, alignment );
-}
-
-void *operator new[]( size_t size, size_t alignment ) {
-    return confetti::allocate( size, alignment );
-}
-
-void *operator new[]( size_t size, size_t alignment, const std::nothrow_t & ) throw( ) {
-    return confetti::allocate( size, alignment );
-}
-
-// C++14 deleter
-void operator delete( void *p, std::size_t sz ) throw( ) {
-    confetti::deallocate( p );
-    (void) ( sz );
-}
-
-void operator delete[]( void *p, std::size_t sz ) throw( ) {
-    confetti::deallocate( p );
-    (void) ( sz );
-}
-
-void operator delete( void *p ) throw( ) {
-    confetti::deallocate( p );
-}
-
-void operator delete[]( void *p ) throw( ) {
-    confetti::deallocate( p );
 }
 
 #if defined( USE_MEMORY_TRACKING )

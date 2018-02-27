@@ -5,9 +5,6 @@
 #include <Common_3/Renderer/IRenderer.h>
 #include <Common_3/Renderer/ResourceLoader.h>
 
-#include <Common_3/ThirdParty/OpenSource/TinySTL/vector.h>
-#include <Common_3/ThirdParty/OpenSource/TinySTL/string.h>
-
 #include <map>
 #include <vector>
 
@@ -43,7 +40,7 @@ struct SceneMesh {
     vec2                           texcoordScale;
     Buffer *                       pVertexBuffer = nullptr;
     Buffer *                       pIndexBuffer  = nullptr;
-    tinystl::vector< SceneMeshSubset > subsets;
+    std::vector< SceneMeshSubset > subsets;
 };
 
 /**
@@ -90,12 +87,12 @@ struct SceneNodeTransform {
 
 class Scene;
 struct SceneNode {
-    Scene *                 scene    = nullptr;
-    uint32_t                id       = -1;
-    uint32_t                parentId = -1;
-    uint32_t                meshId   = -1;
-    tinystl::vector< uint32_t > childIds;
-    tinystl::vector< uint32_t > materialIds;
+    Scene *                     scene    = nullptr;
+    uint32_t                    id       = -1;
+    uint32_t                    parentId = -1;
+    uint32_t                    meshId   = -1;
+    std::vector< uint32_t > childIds;
+    std::vector< uint32_t > materialIds;
 };
 
 class Scene {
@@ -107,21 +104,21 @@ public:
     std::string               sourceData;
     const apemodefb::SceneFb *sourceScene;
 
-    tinystl::vector< SceneNode >          nodes;
-    tinystl::vector< SceneNodeTransform > transforms;
-    tinystl::vector< SceneMesh >          meshes;
-    tinystl::vector< SceneMaterial >      materials;
-    tinystl::vector< Image * >            images;
-    tinystl::vector< Texture * >          textures;
+    std::vector< SceneNode >          nodes;
+    std::vector< SceneNodeTransform > transforms;
+    std::vector< SceneMesh >          meshes;
+    std::vector< SceneMaterial >      materials;
+    std::vector< Image * >            images;
+    std::vector< Texture * >          textures;
 
     //
     // Transform matrices storage.
     //
 
-    tinystl::vector< mat4 > worldMatrices;
-    tinystl::vector< mat4 > localMatrices;
-    tinystl::vector< mat4 > geometricMatrices;
-    tinystl::vector< mat4 > hierarchicalMatrices;
+    std::vector< mat4 > worldMatrices;
+    std::vector< mat4 > localMatrices;
+    std::vector< mat4 > geometricMatrices;
+    std::vector< mat4 > hierarchicalMatrices;
 
     /**
      * Internal usage only.

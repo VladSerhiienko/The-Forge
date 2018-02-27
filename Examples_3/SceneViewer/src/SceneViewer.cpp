@@ -48,7 +48,9 @@
 
 #include "Common_3/OS/Interfaces/IMemoryManager.h"
 
+
 #include "Scene.h"
+
 
 /// Camera Controller
 #define GUI_CAMERACONTROLLER 1
@@ -67,8 +69,7 @@
 #error PLATFORM NOT SUPPORTED
 #endif
 
-
-//Example for using roots or will cause linker error with the extern root in FileSystem.cpp
+// Example for using roots or will cause linker error with the extern root in FileSystem.cpp
 const char* pszRoots[] = {
     "../SceneViewer/" RESOURCE_DIR "/Binary/",          // FSR_BinShaders
     "../SceneViewer/" RESOURCE_DIR "/",                 // FSR_SrcShaders
@@ -93,7 +94,7 @@ struct UniformCamData
 struct UniformObjData
 {
     mat4 mWorldMat;
-    float mRoughness = 0.0f;
+    float mRoughness = 0.04f;
     float mMetallic = 0.0f;
 };
 
@@ -116,10 +117,6 @@ struct UniformLightData
 };
 
 const uint32_t			    gImageCount = 3;
-
-
-Scene * pScene = nullptr;
-//std::unique_ptr< Scene > pScene = nullptr;
 
 Renderer*				    pRenderer = nullptr;
 UIManager*					pUIManager = nullptr;
@@ -176,6 +173,9 @@ uint32_t					gFrameIndex = 0;
 
 
 GpuProfiler*				pGpuProfiler = nullptr;
+
+std::unique_ptr< Scene > pScene = nullptr;
+
 
 
 const int					gSphereResolution = 30; // Increase for higher resolution spheres
@@ -497,7 +497,10 @@ public:
 
         initResourceLoaderInterface(pRenderer, DEFAULT_MEMORY_BUDGET, true);
 
-        if (!Load())
+        if (!addSwapChain())
+            return false;
+
+        if (!addDepthBuffer())
             return false;
 
 #ifdef TARGET_IOS
@@ -572,8 +575,11 @@ public:
         pipelineSettings.mPrimitiveTopo = PRIMITIVE_TOPO_TRI_LIST;
         pipelineSettings.mRenderTargetCount = 1;
         pipelineSettings.pDepthState = pDepth;
-        pipelineSettings.pDepthStencil = pDepthBuffer;
-        pipelineSettings.ppRenderTargets = &pSwapChain->ppSwapchainRenderTargets[0];
+        pipelineSettings.pColorFormats = &pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mFormat;
+        pipelineSettings.pSrgbValues = &pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mSrgb;
+        pipelineSettings.mSampleCount = pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mSampleCount;
+        pipelineSettings.mSampleQuality = pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mSampleQuality;
+        pipelineSettings.mDepthStencilFormat = pDepthBuffer->mDesc.mFormat;
         pipelineSettings.pRootSignature = pRootSigBRDF;
         pipelineSettings.pShaderProgram = pShaderBRDF;
         pipelineSettings.pVertexLayout = &vertexLayoutSphere;
@@ -648,8 +654,11 @@ public:
         pipelineSettings.mPrimitiveTopo = PRIMITIVE_TOPO_TRI_LIST;
         pipelineSettings.mRenderTargetCount = 1;
         pipelineSettings.pDepthState = NULL;
-        pipelineSettings.pDepthStencil = pDepthBuffer;
-        pipelineSettings.ppRenderTargets = &pSwapChain->ppSwapchainRenderTargets[0];
+        pipelineSettings.pColorFormats = &pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mFormat;
+        pipelineSettings.pSrgbValues = &pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mSrgb;
+        pipelineSettings.mSampleCount = pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mSampleCount;
+        pipelineSettings.mSampleQuality = pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mSampleQuality;
+        pipelineSettings.mDepthStencilFormat = pDepthBuffer->mDesc.mFormat;
         pipelineSettings.pRootSignature = pSkyboxRootSignature;
         pipelineSettings.pShaderProgram = pSkyboxShader;
         pipelineSettings.pVertexLayout = &vertexLayoutSkybox;
@@ -698,8 +707,8 @@ public:
         ubLightsDesc.ppBuffer = &pBufferUniformLights;
         addResource(&ubLightsDesc);
 
-        pScene = LoadSceneFromFile( "dreadroamer-free.fbxp" ).release( );
-        //pScene = std::move( LoadSceneFromFile( "dreadroamer-free.fbxp" ) );
+        // pScene = LoadSceneFromFile("dreadroamer-free.fbxp").release();
+        pScene = std::move( LoadSceneFromFile( "dreadroamer-free.fbxp" ) );
 
         finishResourceLoading();
 
@@ -714,8 +723,8 @@ public:
             {
                 mat4 modelmat = mat4::translation(vec3(baseX + x, baseY + y, 0.0f));
                 pUniformDataMVP.mWorldMat = modelmat;
-                pUniformDataMVP.mMetallic = x / (float)gAmountObjectsinX + 0.001f;
-                pUniformDataMVP.mRoughness = y / (float)gAmountObjectsinY + 0.001f;
+                pUniformDataMVP.mMetallic = x / (float)gAmountObjectsinX;
+                pUniformDataMVP.mRoughness = y / (float)gAmountObjectsinY + 0.04f;
 
                 BufferUpdateDesc objBuffUpdateDesc = { gSphereBuffers[(x + y * gAmountObjectsinY)], &pUniformDataMVP };
                 updateResource(&objBuffUpdateDesc);
@@ -818,32 +827,6 @@ public:
         removeResource(pVirtualJoystickTex);
 #endif
 
-        if ( pScene ) {
-
-            for ( auto pMesh : pScene->meshes ) {
-
-                if ( pMesh.pIndexBuffer ) {
-                    removeResource( pMesh.pIndexBuffer );
-                }
-
-                if ( pMesh.pVertexBuffer ) {
-                    removeResource( pMesh.pVertexBuffer );
-                }
-            }
-
-            /*for ( auto pImage : pScene->images ) {
-                pImage->Destroy( );
-                delete pImage;
-            }*/
-
-            for ( auto pTexture : pScene->textures ) {
-                removeResource( pTexture );
-            }
-
-            pScene->~Scene();
-            conf_free( pScene );
-        }
-
         removeGpuProfiler(pRenderer, pGpuProfiler);
 
         removeResource(pBufferUniformCameraSky);
@@ -874,6 +857,25 @@ public:
         removeRootSignature(pRenderer, pRootSigBRDF);
         removeRootSignature(pRenderer, pSkyboxRootSignature);
 
+        if ( pScene ) {
+            for ( auto pMesh : pScene->meshes ) {
+                if ( pMesh.pIndexBuffer ) {
+                    removeResource( pMesh.pIndexBuffer );
+                }
+
+                if ( pMesh.pVertexBuffer ) {
+                    removeResource( pMesh.pVertexBuffer );
+                }
+            }
+
+            for ( auto pTexture : pScene->textures ) {
+                removeResource( pTexture );
+            }
+
+            pScene.reset( );
+        }
+
+
         removeSwapChain(pRenderer, pSwapChain);
 
         // Remove commands and command pool&
@@ -888,33 +890,11 @@ public:
 
     bool Load()
     {
-        SwapChainDesc swapChainDesc = {};
-        swapChainDesc.pWindow = pWindow;
-        swapChainDesc.pQueue = pGraphicsQueue;
-        swapChainDesc.mWidth = mSettings.mWidth;
-        swapChainDesc.mHeight = mSettings.mHeight;
-        swapChainDesc.mImageCount = gImageCount;
-        swapChainDesc.mSampleCount = SAMPLE_COUNT_1;
-        swapChainDesc.mColorFormat = ImageFormat::BGRA8;
-        swapChainDesc.mEnableVsync = false;
-        addSwapChain(pRenderer, &swapChainDesc, &pSwapChain);
+        if (!addSwapChain())
+            return false;
 
-        // Add depth buffer
-        RenderTargetDesc depthRT = {};
-        depthRT.mArraySize = 1;
-        depthRT.mClearValue = { 1.0f, 0 };
-        depthRT.mDepth = 1;
-        depthRT.mFormat = ImageFormat::D32F;
-        depthRT.mHeight = mSettings.mHeight;
-        depthRT.mSampleCount = SAMPLE_COUNT_1;
-        depthRT.mSampleQuality = 0;
-        depthRT.mType = RENDER_TARGET_TYPE_2D;
-        depthRT.mUsage = RENDER_TARGET_USAGE_DEPTH_STENCIL;
-        depthRT.mWidth = mSettings.mWidth;
-#ifdef TARGET_IOS
-        depthRT.mFlags = TEXTURE_CREATION_FLAG_ON_TILE;
-#endif
-        addRenderTarget(pRenderer, &depthRT, &pDepthBuffer);
+        if (!addDepthBuffer())
+            return false;
 
         return true;
     }
@@ -1089,6 +1069,41 @@ public:
     String GetName()
     {
         return "06_BRDF";
+    }
+
+    bool addSwapChain()
+    {
+        SwapChainDesc swapChainDesc = {};
+        swapChainDesc.pWindow = pWindow;
+        swapChainDesc.pQueue = pGraphicsQueue;
+        swapChainDesc.mWidth = mSettings.mWidth;
+        swapChainDesc.mHeight = mSettings.mHeight;
+        swapChainDesc.mImageCount = gImageCount;
+        swapChainDesc.mSampleCount = SAMPLE_COUNT_1;
+        swapChainDesc.mColorFormat = getRecommendedSwapchainFormat(true);
+        swapChainDesc.mEnableVsync = false;
+        ::addSwapChain(pRenderer, &swapChainDesc, &pSwapChain);
+
+        return pSwapChain != NULL;
+    }
+
+    bool addDepthBuffer()
+    {
+        // Add depth buffer
+        RenderTargetDesc depthRT = {};
+        depthRT.mArraySize = 1;
+        depthRT.mClearValue = { 1.0f, 0 };
+        depthRT.mDepth = 1;
+        depthRT.mFormat = ImageFormat::D32F;
+        depthRT.mHeight = mSettings.mHeight;
+        depthRT.mSampleCount = SAMPLE_COUNT_1;
+        depthRT.mSampleQuality = 0;
+        depthRT.mType = RENDER_TARGET_TYPE_2D;
+        depthRT.mUsage = RENDER_TARGET_USAGE_DEPTH_STENCIL;
+        depthRT.mWidth = mSettings.mWidth;
+        addRenderTarget(pRenderer, &depthRT, &pDepthBuffer);
+
+        return pDepthBuffer != NULL;
     }
 
     void RecenterCameraView(float maxDistance, vec3 lookAt = vec3(0))

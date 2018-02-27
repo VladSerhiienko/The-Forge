@@ -22,11 +22,12 @@
  * under the License.
 */
 
-#include "LogManager.h"
 #include "../Interfaces/ILogManager.h"
 #include "../Interfaces/IFileSystem.h"
 #include "../Interfaces/IOperatingSystem.h"
 #include "../Interfaces/IMemoryManager.h"
+
+#include "LogManager.h"
 
 #include "../../ThirdParty/OpenSource/spdlog/include/spdlog/formatter.h"
 #include "../../ThirdParty/OpenSource/spdlog/include/spdlog/fmt/ostr.h"
@@ -94,7 +95,7 @@ LogManager::~LogManager( ) {
 
 void LogManager::Open( const String& fileName ) {
 
-    if ( fileName.isEmpty( ) )
+    if ( 0 == fileName.size( ) )
         return;
 
     mSpdLogger = CreateLogger( ToSpdLogLevel( mLogLevel ), FileSystem::GetCurrentDir( ) + "Log.log" );

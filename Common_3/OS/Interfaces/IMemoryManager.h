@@ -156,8 +156,15 @@ namespace confetti {
 #undef new
 
 template < typename T, typename... Args >
-static T* conf_placement_new( void* ptr, Args... args ) {
+inline T* conf_placement_new( void* ptr, Args... args ) {
     return new ( ptr ) T( args... );
 }
+
+template < typename T, typename... Args >
+inline T* conf_new_impl( const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc, Args... args ) {
+    return new ( m_allocator( sourceFile, sourceLine, sourceFunc, m_alloc_calloc, ( sizeof( T ) ) ) ) T( args... );
+}
+
+#define conf_new( T, ... ) conf_new_impl< T >( __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__ )
 
 #pragma pop_macro( "new" )

@@ -67,6 +67,24 @@ set(FbxPipeline_binary_dir ${BINARY_DIR})
 message(STATUS "FbxPipeline_source_dir = ${FbxPipeline_source_dir}")
 message(STATUS "FbxPipeline_binary_dir = ${FbxPipeline_binary_dir}")
 
+
+ExternalProject_Add(
+    blaze
+    GIT_REPOSITORY "git@bitbucket.org:blaze-lib/blaze.git"
+    GIT_TAG "master"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/Blaze"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    LOG_DOWNLOAD ON
+)
+
+ExternalProject_Get_Property(blaze SOURCE_DIR)
+set(blaze_source_dir ${SOURCE_DIR})
+message(STATUS "blaze_source_dir = ${blaze_source_dir}")
+
 ExternalProject_Add(
     spdlog
     GIT_REPOSITORY "git@github.com:gabime/spdlog.git"
@@ -467,6 +485,7 @@ add_executable(
 
 add_dependencies(
     SceneViewerVk
+    blaze
     spdlog
     flatbuffers
     FbxPipeline
@@ -505,6 +524,7 @@ target_include_directories(
     SceneViewerVk
     PUBLIC
     ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/Blaze
     ${CMAKE_SOURCE_DIR}/Common_3/ThirdParty/OpenSource/FbxPipeline
     ${CMAKE_SOURCE_DIR}/Common_3
     ${flatbuffers_source_dir}/include

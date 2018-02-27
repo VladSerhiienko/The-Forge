@@ -23,12 +23,11 @@
 */
 
 #pragma once
-
-#include "../../ThirdParty/OpenSource/spdlog/include/spdlog/spdlog.h"
 #include "../../ThirdParty/OpenSource/TinySTL/vector.h"
 #include "../../ThirdParty/OpenSource/TinySTL/string.h"
-
 #include "../../OS/Interfaces/IThread.h"
+
+#include "../../ThirdParty/OpenSource/spdlog/include/spdlog/spdlog.h"
 
 enum LogLevel {
     LL_Debug   = spdlog::level::debug,
