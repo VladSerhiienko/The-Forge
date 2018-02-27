@@ -53,6 +53,9 @@ Common_3/ThirdParty/OpenSource/flatbuffers
 **/obj/
 **/bin/
 
+# Nuget packages
+Tools/ShaderBuildCommand/packages/
+
 Common_3/ThirdParty/OpenSource/FbxPipeline
 
 Common_3/ThirdParty/OpenSource/spdlog
