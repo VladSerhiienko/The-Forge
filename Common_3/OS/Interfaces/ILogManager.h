@@ -106,9 +106,9 @@ void _PrintUnicodeLine(const String& str, bool error = false);
 
 #ifdef SPDLOG_VERSION
 
-#define LOGINFOFF( message, ... ) LogManager::Info( message, ##__VA_ARGS__ )
-#define LOGWARNFF( message, ... ) LogManager::Warn( message, ##__VA_ARGS__ )
-#define LOGERRORFF( message, ... ) LogManager::Error( message, ##__VA_ARGS__ )
+#define LOGINFOFF( message, ... ) LogManager::Info( " [{}] " message, __FUNCTION__, ##__VA_ARGS__ )
+#define LOGWARNFF( message, ... ) LogManager::Warn( " [{}] " message, __FUNCTION__, ##__VA_ARGS__ )
+#define LOGERRORFF( message, ... ) LogManager::Error( " [{}] " message, __FUNCTION__, ##__VA_ARGS__ )
 
 #else
 

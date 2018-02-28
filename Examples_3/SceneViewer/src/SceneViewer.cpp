@@ -167,7 +167,7 @@ RasterizerState*			pRasterstateDefault = nullptr;
 Sampler*					pSamplerBilinear = nullptr;
 
 // Vertex buffers
-Buffer*						pSphereVertexBuffer = nullptr;
+//Buffer*						pSphereVertexBuffer = nullptr;
 
 uint32_t					gFrameIndex = 0;
 
@@ -178,8 +178,8 @@ std::unique_ptr< Scene > pScene = nullptr;
 
 
 
-const int					gSphereResolution = 30; // Increase for higher resolution spheres
-int							gNumOfSpherePoints;
+//const int					gSphereResolution = 30; // Increase for higher resolution spheres
+//int							gNumOfSpherePoints;
 
 // How many objects in x and y direction
 const int					gAmountObjectsinX = 6;
@@ -193,9 +193,9 @@ const uint32_t gIrradianceSize = 32;
 const uint32_t gSpecularSize = 128;
 const uint32_t gSpecularMips = 5;
 
-tinystl::vector<Buffer*>	gSphereBuffers;
-
-ICameraController*			pCameraController = nullptr;
+//std::vector< Buffer* > gSphereBuffers;
+std::vector< Buffer* > gSceneBuffers;
+ICameraController*     pCameraController = nullptr;
 
 void transitionRenderTargets()
 {
@@ -539,52 +539,64 @@ public:
         addDepthState(pRenderer, &pDepth, true, true);
         addRasterizerState(&pRasterstateDefault, CULL_MODE_NONE);
 
-        float* pSPherePoints;
-        generateSpherePoints(&pSPherePoints, &gNumOfSpherePoints, gSphereResolution);
+        //float* pSPherePoints;
+        //generateSpherePoints(&pSPherePoints, &gNumOfSpherePoints, gSphereResolution);
 
-        uint64_t sphereDataSize = gNumOfSpherePoints * sizeof(float);
+        //uint64_t sphereDataSize = gNumOfSpherePoints * sizeof(float);
 
-        BufferLoadDesc sphereVbDesc = {};
-        sphereVbDesc.mDesc.mUsage = BUFFER_USAGE_VERTEX;
-        sphereVbDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
-        sphereVbDesc.mDesc.mSize = sphereDataSize;
-        sphereVbDesc.mDesc.mVertexStride = sizeof(float) * 6; // 3 for vertex, 3 for normal
-        sphereVbDesc.pData = pSPherePoints;
-        sphereVbDesc.ppBuffer = &pSphereVertexBuffer;
-        addResource(&sphereVbDesc);
+        //BufferLoadDesc sphereVbDesc = {};
+        //sphereVbDesc.mDesc.mUsage = BUFFER_USAGE_VERTEX;
+        //sphereVbDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
+        //sphereVbDesc.mDesc.mSize = sphereDataSize;
+        //sphereVbDesc.mDesc.mVertexStride = sizeof(float) * 6; // 3 for vertex, 3 for normal
+        //sphereVbDesc.pData = pSPherePoints;
+        //sphereVbDesc.ppBuffer = &pSphereVertexBuffer;
+        //addResource(&sphereVbDesc);
 
-        conf_free(pSPherePoints);
+        //conf_free(pSPherePoints);
 
         // Create vertex layout
         VertexLayout vertexLayoutSphere = {};
-        vertexLayoutSphere.mAttribCount = 2;
+        vertexLayoutSphere.mAttribCount = 4;
 
-        vertexLayoutSphere.mAttribs[0].mSemantic = SEMANTIC_POSITION;
-        vertexLayoutSphere.mAttribs[0].mFormat = ImageFormat::RGB32F;
-        vertexLayoutSphere.mAttribs[0].mBinding = 0;
-        vertexLayoutSphere.mAttribs[0].mLocation = 0;
-        vertexLayoutSphere.mAttribs[0].mOffset = 0;
+        vertexLayoutSphere.mAttribs[ 0 ].mSemantic = SEMANTIC_POSITION;
+        vertexLayoutSphere.mAttribs[ 0 ].mFormat   = ImageFormat::RGB32F;
+        vertexLayoutSphere.mAttribs[ 0 ].mBinding  = 0;
+        vertexLayoutSphere.mAttribs[ 0 ].mLocation = 0;
+        vertexLayoutSphere.mAttribs[ 0 ].mOffset   = 0;
 
-        vertexLayoutSphere.mAttribs[1].mSemantic = SEMANTIC_NORMAL;
-        vertexLayoutSphere.mAttribs[1].mFormat = ImageFormat::RGB32F;
-        vertexLayoutSphere.mAttribs[1].mBinding = 0;
-        vertexLayoutSphere.mAttribs[1].mLocation = 1;
-        vertexLayoutSphere.mAttribs[1].mOffset = 3 * sizeof(float); // first attribute contains 3 floats
+        vertexLayoutSphere.mAttribs[ 1 ].mSemantic = SEMANTIC_NORMAL;
+        vertexLayoutSphere.mAttribs[ 1 ].mFormat   = ImageFormat::RGB32F;
+        vertexLayoutSphere.mAttribs[ 1 ].mBinding  = 0;
+        vertexLayoutSphere.mAttribs[ 1 ].mLocation = 1;
+        vertexLayoutSphere.mAttribs[ 1 ].mOffset   = 3 * sizeof( float );
 
-        GraphicsPipelineDesc pipelineSettings = { 0 };
-        pipelineSettings.mPrimitiveTopo = PRIMITIVE_TOPO_TRI_LIST;
-        pipelineSettings.mRenderTargetCount = 1;
-        pipelineSettings.pDepthState = pDepth;
-        pipelineSettings.pColorFormats = &pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mFormat;
-        pipelineSettings.pSrgbValues = &pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mSrgb;
-        pipelineSettings.mSampleCount = pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mSampleCount;
-        pipelineSettings.mSampleQuality = pSwapChain->ppSwapchainRenderTargets[0]->mDesc.mSampleQuality;
-        pipelineSettings.mDepthStencilFormat = pDepthBuffer->mDesc.mFormat;
-        pipelineSettings.pRootSignature = pRootSigBRDF;
-        pipelineSettings.pShaderProgram = pShaderBRDF;
-        pipelineSettings.pVertexLayout = &vertexLayoutSphere;
-        pipelineSettings.pRasterizerState = pRasterstateDefault;
-        addPipeline(pRenderer, &pipelineSettings, &pPipelineBRDF);
+        vertexLayoutSphere.mAttribs[ 2 ].mSemantic = SEMANTIC_TANGENT;
+        vertexLayoutSphere.mAttribs[ 2 ].mFormat   = ImageFormat::RGBA32F;
+        vertexLayoutSphere.mAttribs[ 2 ].mBinding  = 0;
+        vertexLayoutSphere.mAttribs[ 2 ].mLocation = 2;
+        vertexLayoutSphere.mAttribs[ 2 ].mOffset   = vertexLayoutSphere.mAttribs[ 1 ].mOffset + 3 * sizeof( float );
+
+        vertexLayoutSphere.mAttribs[ 3 ].mSemantic = SEMANTIC_TEXCOORD0;
+        vertexLayoutSphere.mAttribs[ 3 ].mFormat   = ImageFormat::RG32F;
+        vertexLayoutSphere.mAttribs[ 3 ].mBinding  = 0;
+        vertexLayoutSphere.mAttribs[ 3 ].mLocation = 3;
+        vertexLayoutSphere.mAttribs[ 3 ].mOffset   = vertexLayoutSphere.mAttribs[ 2 ].mOffset + 4 * sizeof( float );
+
+        GraphicsPipelineDesc pipelineSettings = {0};
+        pipelineSettings.mPrimitiveTopo       = PRIMITIVE_TOPO_TRI_LIST;
+        pipelineSettings.mRenderTargetCount   = 1;
+        pipelineSettings.pDepthState          = pDepth;
+        pipelineSettings.pColorFormats        = &pSwapChain->ppSwapchainRenderTargets[ 0 ]->mDesc.mFormat;
+        pipelineSettings.pSrgbValues          = &pSwapChain->ppSwapchainRenderTargets[ 0 ]->mDesc.mSrgb;
+        pipelineSettings.mSampleCount         = pSwapChain->ppSwapchainRenderTargets[ 0 ]->mDesc.mSampleCount;
+        pipelineSettings.mSampleQuality       = pSwapChain->ppSwapchainRenderTargets[ 0 ]->mDesc.mSampleQuality;
+        pipelineSettings.mDepthStencilFormat  = pDepthBuffer->mDesc.mFormat;
+        pipelineSettings.pRootSignature       = pRootSigBRDF;
+        pipelineSettings.pShaderProgram       = pShaderBRDF;
+        pipelineSettings.pVertexLayout        = &vertexLayoutSphere;
+        pipelineSettings.pRasterizerState     = pRasterstateDefault;
+        addPipeline( pRenderer, &pipelineSettings, &pPipelineBRDF );
 
         //Generate sky box vertex buffer
         float skyBoxPoints[] = {
@@ -666,22 +678,46 @@ public:
         addPipeline(pRenderer, &pipelineSettings, &pSkyboxPipeline);
 
         // Create a uniform buffer per obj
-        for (int y = 0; y < gAmountObjectsinY; ++y)
-        {
-            for (int x = 0; x < gAmountObjectsinX; ++x)
-            {
-                Buffer* tBuffer = nullptr;
+        //for (int y = 0; y < gAmountObjectsinY; ++y)
+        //{
+        //    for (int x = 0; x < gAmountObjectsinX; ++x)
+        //    {
+        //        Buffer* tBuffer = nullptr;
+        //        BufferLoadDesc buffDesc = {};
+        //        buffDesc.mDesc.mUsage = BUFFER_USAGE_UNIFORM;
+        //        buffDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
+        //        buffDesc.mDesc.mSize = sizeof(UniformObjData);
+        //        buffDesc.mDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT; // not sure if persistent mapping is needed here
+        //        buffDesc.pData = NULL;
+        //        buffDesc.ppBuffer = &tBuffer;
+        //        addResource(&buffDesc);
+        //        gSphereBuffers.push_back(tBuffer);
+        //    }
+        //}
 
-                BufferLoadDesc buffDesc = {};
-                buffDesc.mDesc.mUsage = BUFFER_USAGE_UNIFORM;
+        // pScene = LoadSceneFromFile("dreadroamer-free.fbxp").release();
+        // pScene = std::move( LoadSceneFromFile( "dreadroamer-free.fbxp" ) );
+        // knight-artorias.fbxp
+        // 1972-datsun-240k-gt.fbxp
+
+        // pScene = std::move( LoadSceneFromFile( "cube.fbxp" ) );
+        pScene = std::move( LoadSceneFromFile( "1972-datsun-240k-gt.fbxp" ) );
+        //pScene = std::move( LoadSceneFromFile( "dreadroamer-free.fbxp" ) );
+        // pScene = std::move( LoadSceneFromFile( "knight-artorias.fbxp" ) );
+        pScene->UpdateMatrices( );
+
+        for ( auto& n : pScene->nodes ) {
+            if ( n.meshId != -1 ) {
+
+                BufferLoadDesc buffDesc     = {};
+                buffDesc.mDesc.mUsage       = BUFFER_USAGE_UNIFORM;
                 buffDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_CPU_TO_GPU;
-                buffDesc.mDesc.mSize = sizeof(UniformObjData);
-                buffDesc.mDesc.mFlags = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT; // not sure if persistent mapping is needed here
-                buffDesc.pData = NULL;
-                buffDesc.ppBuffer = &tBuffer;
-                addResource(&buffDesc);
+                buffDesc.mDesc.mSize        = sizeof( UniformObjData );
+                buffDesc.mDesc.mFlags       = BUFFER_CREATION_FLAG_PERSISTENT_MAP_BIT;
+                buffDesc.pData              = NULL;
+                buffDesc.ppBuffer           = &n.pBuffer;
 
-                gSphereBuffers.push_back(tBuffer);
+                addResource( &buffDesc );
             }
         }
 
@@ -707,31 +743,38 @@ public:
         ubLightsDesc.ppBuffer = &pBufferUniformLights;
         addResource(&ubLightsDesc);
 
-        // pScene = LoadSceneFromFile("dreadroamer-free.fbxp").release();
-        pScene = std::move( LoadSceneFromFile( "dreadroamer-free.fbxp" ) );
-
         finishResourceLoading();
 
         // prepare resources
 
-        // Update the uniform buffer for the objects
-        float baseX = -2.5f;
-        float baseY = -2.5f;
-        for (int y = 0; y < gAmountObjectsinY; ++y)
-        {
-            for (int x = 0; x < gAmountObjectsinX; ++x)
-            {
-                mat4 modelmat = mat4::translation(vec3(baseX + x, baseY + y, 0.0f));
-                pUniformDataMVP.mWorldMat = modelmat;
-                pUniformDataMVP.mMetallic = x / (float)gAmountObjectsinX;
-                pUniformDataMVP.mRoughness = y / (float)gAmountObjectsinY + 0.04f;
+        //// Update the uniform buffer for the objects
+        for ( auto& n : pScene->nodes ) {
+            if ( n.meshId != -1 ) {
+                //pUniformDataMVP.mWorldMat = mat4::identity( );
+                pUniformDataMVP.mWorldMat  = pScene->worldMatrices[ n.id ];
+                pUniformDataMVP.mMetallic  = n.id / (float) pScene->nodes.size( );
+                pUniformDataMVP.mRoughness = 1.0f - n.id / (float) gAmountObjectsinY;
 
-                BufferUpdateDesc objBuffUpdateDesc = { gSphereBuffers[(x + y * gAmountObjectsinY)], &pUniformDataMVP };
-                updateResource(&objBuffUpdateDesc);
-
-                int comb = x + y * gAmountObjectsinY;
+                BufferUpdateDesc objBuffUpdateDesc = {n.pBuffer, &pUniformDataMVP};
+                updateResource( &objBuffUpdateDesc );
             }
         }
+
+        //// Update the uniform buffer for the objects
+        //float baseX = -2.5f;
+        //float baseY = -2.5f;
+        //for (int y = 0; y < gAmountObjectsinY; ++y)
+        //{
+        //    for (int x = 0; x < gAmountObjectsinX; ++x)
+        //    {
+        //        mat4 modelmat = mat4::translation(vec3(baseX + x, baseY + y, 0.0f));
+        //        pUniformDataMVP.mWorldMat = modelmat;
+        //        pUniformDataMVP.mMetallic = x / (float)gAmountObjectsinX;
+        //        pUniformDataMVP.mRoughness = y / (float)gAmountObjectsinY + 0.04f;
+        //        BufferUpdateDesc objBuffUpdateDesc = { gSphereBuffers[(x + y * gAmountObjectsinY)], &pUniformDataMVP };
+        //        updateResource(&objBuffUpdateDesc);
+        //    }
+        //}
 
         // Add light to scene
         Light light;
@@ -833,7 +876,7 @@ public:
         removeResource(pBufferUniformCamera);
         removeResource(pBufferUniformLights);
         removeResource(pSkyboxVertexBuffer);
-        removeResource(pSphereVertexBuffer);
+        //removeResource(pSphereVertexBuffer);
 
         removeUIManagerInterface(pRenderer, pUIManager);
 
@@ -844,7 +887,7 @@ public:
 
         for (int i = 0; i < gAmountObjectsinY*gAmountObjectsinX; ++i)
         {
-            removeResource(gSphereBuffers[i]);
+            //removeResource(gSphereBuffers[i]);
         }
 
         removeDepthState(pDepth);
@@ -865,6 +908,12 @@ public:
 
                 if ( pMesh.pVertexBuffer ) {
                     removeResource( pMesh.pVertexBuffer );
+                }
+            }
+
+            for ( auto& node : pScene->nodes ) {
+                if ( node.pBuffer ) {
+                    removeResource( node.pBuffer );
                 }
             }
 
@@ -985,27 +1034,37 @@ public:
         cmdBindPipeline(cmd, pPipelineBRDF);
 
         // These params stays the same, we alternate our next param
-        DescriptorData params[6] = {};
-        params[0].pName = "cbCamera";
-        params[0].ppBuffers = &pBufferUniformCamera;
-        params[1].pName = "cbLights";
-        params[1].ppBuffers = &pBufferUniformLights;
-        params[2].pName = "brdfIntegrationMap";
-        params[2].ppTextures = &pBRDFIntegrationMap;
-        params[3].pName = "irradianceMap";
-        params[3].ppTextures = &pIrradianceMap;
-        params[4].pName = "specularMap";
-        params[4].ppTextures = &pSpecularMap;
+        DescriptorData params[ 6 ] = {};
+        params[ 0 ].pName          = "cbCamera";
+        params[ 0 ].ppBuffers      = &pBufferUniformCamera;
+        params[ 1 ].pName          = "cbLights";
+        params[ 1 ].ppBuffers      = &pBufferUniformLights;
+        params[ 2 ].pName          = "brdfIntegrationMap";
+        params[ 2 ].ppTextures     = &pBRDFIntegrationMap;
+        params[ 3 ].pName          = "irradianceMap";
+        params[ 3 ].ppTextures     = &pIrradianceMap;
+        params[ 4 ].pName          = "specularMap";
+        params[ 4 ].ppTextures     = &pSpecularMap;
 
-        for (int i = 0; i < gSphereBuffers.size(); ++i)
-        {
-            // Add the uniform buffer for every sphere
-            params[5].pName = "cbObject";
-            params[5].ppBuffers = &gSphereBuffers[i];
+        for ( auto& n : pScene->nodes ) {
+            if ( n.meshId != -1 ) {
+                params[ 5 ].pName     = "cbObject";
+                params[ 5 ].ppBuffers = &n.pBuffer;
 
-            cmdBindDescriptors(cmd, pRootSigBRDF, 6, params);
-            cmdBindVertexBuffer(cmd, 1, &pSphereVertexBuffer);
-            cmdDrawInstanced(cmd, gNumOfSpherePoints / 6, 0, 1);
+                cmdBindDescriptors( cmd, pRootSigBRDF, 6, params );
+                cmdBindVertexBuffer( cmd, 1, &pScene->meshes[ n.meshId ].pVertexBuffer );
+
+                if ( nullptr == pScene->meshes[ n.meshId ].pIndexBuffer ) {
+                    for ( auto& ss : pScene->meshes[ n.meshId ].subsets ) {
+                        cmdDrawInstanced( cmd, ss.indexCount, ss.baseIndex, 1 );
+                    }
+                } else {
+                    cmdBindIndexBuffer( cmd, pScene->meshes[ n.meshId ].pIndexBuffer );
+                    for ( auto& ss : pScene->meshes[ n.meshId ].subsets ) {
+                        cmdDrawIndexedInstanced( cmd, ss.indexCount, ss.baseIndex, 1 );
+                    }
+                }
+            }
         }
 
         cmdEndRender(cmd, 1, &pRenderTarget, pDepthBuffer);

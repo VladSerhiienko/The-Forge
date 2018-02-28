@@ -4,6 +4,7 @@
 #include <Common_3/OS/Math/MathTypes.h>
 #include <Common_3/Renderer/IRenderer.h>
 #include <Common_3/Renderer/ResourceLoader.h>
+//#include <Common_3/ThirdParty/OpenSource/Blaze/blaze/Blaze.h>
 
 #include <map>
 #include <vector>
@@ -12,6 +13,7 @@
 #include <flatbuffers/util.h>
 
 #include <FbxPipeline/generated/scene_generated.h>
+
 
 struct SceneMaterial {
     float    alphaCutoff;
@@ -87,12 +89,12 @@ struct SceneNodeTransform {
 
 class Scene;
 struct SceneNode {
-    Scene *                     scene    = nullptr;
-    uint32_t                    id       = -1;
-    uint32_t                    parentId = -1;
-    uint32_t                    meshId   = -1;
+    uint32_t                id       = -1;
+    uint32_t                parentId = -1;
+    uint32_t                meshId   = -1;
     std::vector< uint32_t > childIds;
     std::vector< uint32_t > materialIds;
+    Buffer *                pBuffer = nullptr;
 };
 
 class Scene {

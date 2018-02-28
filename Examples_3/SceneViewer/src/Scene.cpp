@@ -195,8 +195,8 @@ std::unique_ptr< Scene > LoadSceneFromFile( const char *filename ) {
 
     if ( scene->sourceScene = apemodefb::GetSceneFb( sceneFileString.c_str( ) ) ) {
 
-        std::set< uint32 > meshIds;
-        std::set< uint32 > materialIds;
+        std::set< uint32 >            meshIds;
+        std::set< uint32 >            materialIds;
         std::map< uint32, Texture * > textureIdToTexture;
 
         if ( auto nodesFb = scene->sourceScene->nodes( ) ) {
@@ -213,7 +213,6 @@ std::unique_ptr< Scene > LoadSceneFromFile( const char *filename ) {
                 auto &node = scene->nodes[ nodeFb->id( ) ];
 
                 node.id     = nodeFb->id( );
-                node.scene  = scene.get( );
                 node.meshId = nodeFb->mesh_id( );
 
                 LOGINFOFF( "Processing node: {}", GetStringProperty( scene->sourceScene, nodeFb->name_id( ) ).c_str( ) );
@@ -227,7 +226,7 @@ std::unique_ptr< Scene > LoadSceneFromFile( const char *filename ) {
                 auto childIdsIt = nodeFb->child_ids( )->data( );
                 auto childIdsEndIt = childIdsIt + nodeFb->child_ids( )->size( );
                 std::transform( childIdsIt, childIdsEndIt, std::back_inserter( node.childIds ), [&]( auto id ) {
-                    auto &childNode    = scene->nodes[ id ];
+                    auto &childNode = scene->nodes[ id ];
                     childNode.parentId = node.id;
                     return id;
                 } );
@@ -237,7 +236,7 @@ std::unique_ptr< Scene > LoadSceneFromFile( const char *filename ) {
                 }
 
                 if ( nodeFb->material_ids( ) && nodeFb->material_ids( )->size( ) ) {
-                    auto matIdsIt    = nodeFb->material_ids( )->data( );
+                    auto matIdsIt = nodeFb->material_ids( )->data( );
                     auto matIdsEndIt = matIdsIt + nodeFb->material_ids( )->size( );
                     std::transform( matIdsIt, matIdsEndIt, std::back_inserter( node.materialIds ), [&]( auto id ) { return id; } );
                     materialIds.insert( matIdsIt, matIdsEndIt );
@@ -290,12 +289,9 @@ std::unique_ptr< Scene > LoadSceneFromFile( const char *filename ) {
         }
 
         if ( auto meshesFb = scene->sourceScene->meshes( ) ) {
-            // scene->meshes.reserve( meshesFb->size( ) );
             scene->meshes.reserve( meshIds.size( ) );
 
             for ( auto meshId : meshIds ) {
-
-                // for ( auto meshFb : *meshesFb ) {
                 auto meshFb = FlatbuffersTVectorGetAtIndex( meshesFb, meshId );
 
                 assert( meshFb );
@@ -329,7 +325,7 @@ std::unique_ptr< Scene > LoadSceneFromFile( const char *filename ) {
                     vertexBufferLoadDesc.mDesc.mMemoryUsage  = RESOURCE_MEMORY_USAGE_GPU_ONLY;
                     vertexBufferLoadDesc.mDesc.mSize         = submeshFb->vertex_count( ) * submeshFb->vertex_stride( );
                     vertexBufferLoadDesc.mDesc.mVertexStride = submeshFb->vertex_stride( );
-                    vertexBufferLoadDesc.pData               = meshFb->vertices( ) + submeshFb->base_vertex( ) * submeshFb->vertex_stride( );
+                    vertexBufferLoadDesc.pData               = meshFb->vertices( )->data( ) + submeshFb->base_vertex( ) * submeshFb->vertex_stride( );
                     vertexBufferLoadDesc.ppBuffer            = &mesh.pVertexBuffer;
 
                     addResource( &vertexBufferLoadDesc );
@@ -339,11 +335,14 @@ std::unique_ptr< Scene > LoadSceneFromFile( const char *filename ) {
                         BufferLoadDesc indexBufferLoadDesc = {};
                         memset( &indexBufferLoadDesc, 0, sizeof( vertexBufferLoadDesc ) );
 
+                        uint32 stride = meshFb->index_type( ) == apemodefb::EIndexTypeFb_UInt32 ? 4 : 2;
+                        IndexType indexType = meshFb->index_type( ) == apemodefb::EIndexTypeFb_UInt32 ? INDEX_TYPE_UINT32 : INDEX_TYPE_UINT16;
+
                         indexBufferLoadDesc.mDesc.mUsage       = BUFFER_USAGE_INDEX;
                         indexBufferLoadDesc.mDesc.mMemoryUsage = RESOURCE_MEMORY_USAGE_GPU_ONLY;
-                        indexBufferLoadDesc.mDesc.mSize        = submeshFb->index_count( ) * ( meshFb->index_type( ) + 2 );
-                        indexBufferLoadDesc.mDesc.mIndexType   = meshFb->index_type( ) == apemodefb::EIndexTypeFb_UInt32 ? INDEX_TYPE_UINT32 : INDEX_TYPE_UINT16;
-                        indexBufferLoadDesc.pData              = meshFb->indices( ) + submeshFb->base_index( ) * ( meshFb->index_type( ) + 2 );
+                        indexBufferLoadDesc.mDesc.mSize        = submeshFb->index_count( ) * stride;
+                        indexBufferLoadDesc.mDesc.mIndexType   = indexType;
+                        indexBufferLoadDesc.pData              = meshFb->indices( )->data( ) + submeshFb->base_index( ) * stride;
                         indexBufferLoadDesc.ppBuffer           = &mesh.pIndexBuffer;
 
                         addResource( &indexBufferLoadDesc );
@@ -367,11 +366,11 @@ std::unique_ptr< Scene > LoadSceneFromFile( const char *filename ) {
             }
         }
 
-
         if ( auto pMaterialsFb = scene->sourceScene->materials( ) ) {
             scene->materials.reserve( pMaterialsFb->size( ) );
 
             for ( auto materialId : materialIds ) {
+                break;
                 auto pMaterialFb = FlatbuffersTVectorGetAtIndex( pMaterialsFb, materialId );
                 assert( pMaterialFb );
 
